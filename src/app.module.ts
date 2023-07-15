@@ -6,6 +6,8 @@ import { UserModule } from './user/user.module';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TimeZoneModule } from './time-zone/time-zone.module';
+import { CurrencyModule } from './currency/currency.module';
+import { MailService } from './common/services/mail/mail.service';
 
 @Module({
   imports: [
@@ -16,8 +18,9 @@ import { TimeZoneModule } from './time-zone/time-zone.module';
     MongooseModule.forRoot(process.env.MONGO_DB_CLOUD_URL),
     UserModule,
     TimeZoneModule,
+    CurrencyModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MailService],
 })
 export class AppModule { }
