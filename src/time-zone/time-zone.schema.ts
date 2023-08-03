@@ -4,6 +4,7 @@ export const TimeZoneSchema = new Schema(
     {
         zone: { type: String, require: true, unique: true },
         gmt_time: { type: String, require: true },
+        gmt_minutes: { type: Number, require: true },
         name: { type: String, require: true },
     },
     {
