@@ -8,6 +8,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { TimeZoneModule } from './time-zone/time-zone.module';
 import { CurrencyModule } from './currency/currency.module';
 import { MailService } from './common/services/mail/mail.service';
+import { IconsModule } from './icons/icons.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { MailService } from './common/services/mail/mail.service';
     UserModule,
     TimeZoneModule,
     CurrencyModule,
+    IconsModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
