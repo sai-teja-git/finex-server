@@ -3,6 +3,7 @@ import { TIME_ZONE_TABLE } from './time-zone.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TimeZone } from './time-zone.interface';
+import * as moment from "moment-timezone"
 
 @Injectable()
 export class TimeZoneService {
@@ -80,7 +81,7 @@ export class TimeZoneService {
        * ```
        * need T and Z for the zone conversion, for filtering the mongodb
        */
-      return this.timeZoneModel.find({ updated_at: { $gte: body.start_time, $lte: body.end_time } })
+      return this.timeZoneModel.find({ updated_at: { $gte: moment.utc(body.start_time).toDate(), $lte: moment.utc(body.end_time).toDate() } })
     } catch (error) {
       throw new HttpException(error.message, error.status ?? 500)
     }
