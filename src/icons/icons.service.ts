@@ -106,11 +106,44 @@ export class IconsService {
     }
   }
 
-  // TODO
+  /**
+   * The function updates the icon type in the database and returns a success message.
+   * @param {any} body - The `body` parameter is an object that contains the following properties:
+   * @returns an object with two properties: "status" and "message". The "status" property is set to
+   * HttpStatus.OK, which is likely an HTTP status code indicating a successful request. The "message"
+   * property is set to the string "Updated".
+   */
   async updateIconType(body: any) {
     try {
       await this.iconModel.updateOne({ _id: body.id }, {
         ...body.updated
+      })
+      return {
+        status: HttpStatus.OK,
+        message: "Updated"
+      }
+    } catch (error) {
+      throw new HttpException(error.message, error.status ?? 500)
+    }
+  }
+
+  /**
+   * The function `updateIconData` updates a specific icon in a database collection based on the
+   * provided `body` object.
+   * @param {any} body - The `body` parameter is an object that contains the following properties:
+   * @returns an object with two properties: "status" and "message". The "status" property is set to
+   * HttpStatus.OK, and the "message" property is set to "Updated".
+   */
+  async updateIconData(body: any) {
+    try {
+      let update_object = {}
+      for (let key in body.updated) {
+        update_object["icons.$." + key] = body.updated[key]
+      }
+      await this.iconModel.updateOne({
+        _id: body.type_id, "icons._id": body.icon_id
+      }, {
+        $set: update_object
       })
       return {
         status: HttpStatus.OK,

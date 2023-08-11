@@ -26,4 +26,9 @@ export class IconsController {
     return this.iconsService.updateIconType(body)
   }
 
+  @Patch("icon")
+  updateIconData(@Body() body) {
+    return this.iconsService.updateIconData(body)
+  }
+
 }

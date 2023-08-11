@@ -64,7 +64,10 @@ export class TimeZoneService {
       //   // data,
       //   status: HttpStatus.OK
       // }
-      return this.timeZoneModel.find().exec();
+      return {
+        data: this.timeZoneModel.find().exec(),
+        status: HttpStatus.OK
+      }
     } catch (error) {
       throw new HttpException(error.message, error.status ?? 500)
     }

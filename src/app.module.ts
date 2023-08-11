@@ -9,6 +9,7 @@ import { TimeZoneModule } from './time-zone/time-zone.module';
 import { CurrencyModule } from './currency/currency.module';
 import { MailService } from './common/services/mail/mail.service';
 import { IconsModule } from './icons/icons.module';
+import { ColorsModule } from './colors/colors.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { IconsModule } from './icons/icons.module';
     TimeZoneModule,
     CurrencyModule,
     IconsModule,
+    ColorsModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
