@@ -1,15 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateCurrencyDto } from './dto/create-currency.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { CURRENCY_TABLE } from './currency.schema';
-import { Currency } from './currency.interface';
+import { CURRENCY_TABLE, CurrencyModel } from './schemas/currency.schema';
 import { Model } from 'mongoose';
 
 @Injectable()
 export class CurrencyService {
 
   constructor(
-    @InjectModel(CURRENCY_TABLE) private currencyModel: Model<Currency>,
+    @InjectModel(CURRENCY_TABLE) private currencyModel: Model<CurrencyModel>,
   ) { }
 
   async insertCurrencyData(body: any) {

@@ -1,15 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { TIME_ZONE_TABLE } from './time-zone.schema';
+import { TIME_ZONE_TABLE, TimeZoneModel } from './schemas/time-zone.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { TimeZone } from './time-zone.interface';
 import * as moment from "moment-timezone"
 
 @Injectable()
 export class TimeZoneService {
 
   constructor(
-    @InjectModel(TIME_ZONE_TABLE) private timeZoneModel: Model<TimeZone>,
+    @InjectModel(TIME_ZONE_TABLE) private timeZoneModel: Model<TimeZoneModel>,
   ) { }
 
   /**

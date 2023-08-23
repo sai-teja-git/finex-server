@@ -1,14 +1,13 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { COLORS_TABLE } from './colors.schema';
+import { COLORS_TABLE, ColorModel } from './schemas/colors.schema';
 import { Model } from 'mongoose';
-import { Color } from './colors.interface';
 
 @Injectable()
 export class ColorsService {
 
   constructor(
-    @InjectModel(COLORS_TABLE) private colors: Model<Color>
+    @InjectModel(COLORS_TABLE) private colors: Model<ColorModel>
   ) { }
 
   /**
@@ -42,7 +41,7 @@ export class ColorsService {
   async getAllColors() {
     try {
       return {
-        data: this.colors.find().exec(),
+        data: await this.colors.find().exec(),
         status: HttpStatus.OK
       }
     } catch (error) {

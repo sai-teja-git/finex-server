@@ -10,6 +10,8 @@ import { CurrencyModule } from './currency/currency.module';
 import { MailService } from './common/services/mail/mail.service';
 import { IconsModule } from './icons/icons.module';
 import { ColorsModule } from './colors/colors.module';
+import { CategoryModule } from './category/category.module';
+import { UserCategoryModule } from './user-category/user-category.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { ColorsModule } from './colors/colors.module';
     CurrencyModule,
     IconsModule,
     ColorsModule,
+    CategoryModule,
+    UserCategoryModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
