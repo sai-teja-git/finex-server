@@ -14,6 +14,7 @@ import { CATEGORY_TABLE, CategorySchema } from './schemas/category.schema';
     ])
   ],
   controllers: [CategoryController],
-  providers: [CategoryService]
+  providers: [CategoryService],
+  exports: [MongooseModule]
 })
 export class CategoryModule { }

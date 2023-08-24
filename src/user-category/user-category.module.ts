@@ -14,6 +14,7 @@ import { USER_CATEGORY_TABLE, UserCategorySchema } from './schemas/user-category
     ])
   ],
   controllers: [UserCategoryController],
-  providers: [UserCategoryService]
+  providers: [UserCategoryService],
+  exports: [MongooseModule]
 })
 export class UserCategoryModule { }

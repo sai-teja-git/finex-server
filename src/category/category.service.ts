@@ -20,9 +20,9 @@ export class CategoryService {
    * "Categories Created" and the "status" property is set to the value of the "HttpStatus.CREATED"
    * constant.
    */
-  async insertCategories(body: any) {
+  async insertCategories(data: any) {
     try {
-      await this.category.insertMany(body.data)
+      await this.category.insertMany(data)
       return {
         message: "Categories Created",
         status: HttpStatus.CREATED

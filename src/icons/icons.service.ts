@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ICONS_TABLE } from './icons.schema';
+import { ICONS_TABLE, IconGroupModel } from './schemas/icons.schema';
 import { Model } from 'mongoose';
 import { Icon } from './icons.interface';
 
@@ -8,7 +8,7 @@ import { Icon } from './icons.interface';
 export class IconsService {
 
   constructor(
-    @InjectModel(ICONS_TABLE) private iconModel: Model<Icon>
+    @InjectModel(ICONS_TABLE) private iconModel: Model<IconGroupModel>
   ) { }
 
   /**

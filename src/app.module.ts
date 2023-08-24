@@ -12,6 +12,7 @@ import { IconsModule } from './icons/icons.module';
 import { ColorsModule } from './colors/colors.module';
 import { CategoryModule } from './category/category.module';
 import { UserCategoryModule } from './user-category/user-category.module';
+import { env } from 'process';
 
 @Module({
   imports: [
@@ -19,7 +20,11 @@ import { UserCategoryModule } from './user-category/user-category.module';
     ConfigModule.forRoot({
       isGlobal: true
     }),
-    MongooseModule.forRoot(process.env.MONGO_DB_CLOUD_URL),
+    MongooseModule.forRootAsync({
+      useFactory: () => ({
+        uri: env.MONGO_DB_CLOUD_URL,
+      }),
+    }),
     UserModule,
     TimeZoneModule,
     CurrencyModule,

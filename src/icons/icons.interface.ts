@@ -3,7 +3,7 @@ import { Document } from "mongoose";
 /**
  * interface for the each icon object inside the type
  */
-interface IconObject extends Document {
+export interface IconObject extends Document {
     key: string,
     name: string,
     icon: string

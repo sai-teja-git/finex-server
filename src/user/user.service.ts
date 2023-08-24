@@ -1,16 +1,22 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model } from 'mongoose';
 import { User } from './user.interface';
-import { USER_TABLE } from './user.schema';
+import { USER_TABLE, UserModel } from './schemas/user.schema';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../auth/auth.service';
+import { CATEGORY_TABLE, CategoryModel } from 'src/category/schemas/category.schema';
+import { USER_CATEGORY_TABLE, UserCategoryModel } from 'src/user-category/schemas/user-category.schema';
+import { MailService } from 'src/common/services/mail/mail.service';
 
 @Injectable()
 export class UserService {
 
   constructor(
-    @InjectModel(USER_TABLE) private userModel: Model<User>,
+    @InjectModel(USER_TABLE) private readonly userModel: Model<UserModel>,
+    @InjectModel(CATEGORY_TABLE) private readonly categoryModel: Model<CategoryModel>,
+    @InjectModel(USER_CATEGORY_TABLE) private readonly userCategoryModel: Model<UserCategoryModel>,
+    private readonly mailService: MailService,
     private authService: AuthService
   ) { }
 
@@ -26,10 +32,67 @@ export class UserService {
     try {
       const saltOrRounds = 10;
       body["password"] = await bcrypt.hash(body["password"], saltOrRounds);
-      await this.userModel.insertMany(body)
+      let user_data = await this.userModel.create(body);
+      try {
+        let mail_body = {
+          to: [
+            body.email,
+          ],
+          title: "verification",
+          subject: "Confirm Your Account",
+          template: "test_temp",
+          "context": {
+            "name": body.name,
+            "verifyLink": "https://tailwindcss.com/docs/customizing-colors",
+            "attachments": []
+          }
+        }
+        await this.sendMail(mail_body)
+      } catch (error) {
+        await this.userModel.deleteOne({ _id: user_data._id });
+        throw new HttpException(error.message, error.status ?? 500)
+      }
+      // TODO implement the mail verification
+      // let categories = await this.categoryModel.find().exec();
+      // categories = JSON.parse(JSON.stringify(categories))
+      // let user_category_to_insert = categories.map(category => {
+      //   try {
+      //     delete category._id
+      //   } catch { }
+      //   try {
+      //     delete category["created_at"]
+      //   } catch { }
+      //   try {
+      //     delete category["updated_at"]
+      //   } catch { }
+      //   return Object.assign({ user_id: user_data._id }, category)
+      // })
+      // try {
+      //   await this.userCategoryModel.insertMany(user_category_to_insert)
+      // } catch (error) {
+      //   await this.userModel.deleteOne({ _id: user_data._id });
+      //   throw new HttpException(error.message, error.status ?? 500)
+      // }
       return {
+        user_id: user_data._id,
         message: "User Created",
         status: HttpStatus.CREATED
+      }
+    } catch (error) {
+      throw new HttpException(error.message, error.status ?? 500)
+    }
+  }
+
+  async sendMail(body) {
+    try {
+      let mail_data = await this.mailService.sendTemplatedEmail(body)
+      return {
+        message: "Mail Sent",
+        status: HttpStatus.CREATED,
+        data: {
+          envelope: mail_data.envelope,
+          messageId: mail_data.messageId
+        }
       }
     } catch (error) {
       throw new HttpException(error.message, error.status ?? 500)

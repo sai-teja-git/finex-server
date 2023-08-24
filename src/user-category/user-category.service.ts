@@ -22,7 +22,7 @@ export class UserCategoryService {
    */
   async insertUserCategories(body: any) {
     try {
-      await this.userCategory.insertMany(body.data)
+      await this.userCategory.create(body)
       return {
         message: "Categories Created",
         status: HttpStatus.CREATED
