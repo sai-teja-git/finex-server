@@ -25,7 +25,7 @@ export class MailService {
      *      "template": "test_temp",
      *      "context": {
      *          "name": "Chandra Sekhar",
-     *          "verifyLink": "https://tailwindcss.com/docs/customizing-colors",
+     *          "verify_link": "https://tailwindcss.com/docs/customizing-colors",
      *          "attachments": []
      *      }
      * }

@@ -18,6 +18,11 @@ export class UserController {
     return this.userService.login(body)
   }
 
+  @Post("verify")
+  verifyUser(@Body() body) {
+    return this.userService.verifyUser(body)
+  }
+
   @Get()
   getAllUsers() {
     return this.userService.getAllUsers()
