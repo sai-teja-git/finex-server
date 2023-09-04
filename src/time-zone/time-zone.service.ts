@@ -64,7 +64,7 @@ export class TimeZoneService {
       //   status: HttpStatus.OK
       // }
       return {
-        data: this.timeZoneModel.find().exec(),
+        data: await this.timeZoneModel.find().exec(),
         status: HttpStatus.OK
       }
     } catch (error) {

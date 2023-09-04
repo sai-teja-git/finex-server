@@ -25,7 +25,10 @@ export class CurrencyService {
 
   async getAllCurrency() {
     try {
-      return this.currencyModel.find().exec();
+      return {
+        data: await this.currencyModel.find().exec(),
+        status: HttpStatus.OK
+      }
     } catch (error) {
       throw new HttpException(error.message, error.status ?? 500)
     }
