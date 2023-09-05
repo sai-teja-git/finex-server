@@ -17,6 +17,8 @@ export class UserModel {
     @Prop({ type: Boolean, default: false })
     verified: boolean;
     @Prop({ type: String, required: true })
+    time_zone_id: string;
+    @Prop({ type: String, required: true })
     time_zone: string;
     @Prop({ type: String, required: true })
     time_zone_gmt_time: string;

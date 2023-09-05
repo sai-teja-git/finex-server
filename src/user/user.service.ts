@@ -8,6 +8,7 @@ import { AuthService } from '../auth/auth.service';
 import { CATEGORY_TABLE, CategoryModel } from 'src/category/schemas/category.schema';
 import { USER_CATEGORY_TABLE, UserCategoryModel } from 'src/user-category/schemas/user-category.schema';
 import { MailService } from 'src/common/services/mail/mail.service';
+import * as moment from "moment-timezone"
 
 @Injectable()
 export class UserService {
@@ -31,7 +32,7 @@ export class UserService {
    * - message: A message indicating that the user has been created.
    * - status: The HTTP status code for the response, which is HttpStatus.CREATED.
    */
-  async signUpUser(body) {
+  async signUpUser(body, req: any) {
     try {
       const saltOrRounds = 10;
       body["password"] = await bcrypt.hash(body["password"], saltOrRounds);
@@ -41,7 +42,7 @@ export class UserService {
         generated_at: new Date(),
         expire_time: new Date(new Date().setDate(new Date().getDate() + 1))
       }
-      let verification_link = body.email_host + btoa(JSON.stringify(data_for_verification))
+      let verification_link = req.headers.origin + "/email-verification?data=" + btoa(JSON.stringify(data_for_verification))
       try {
         let mail_body = {
           to: [
@@ -67,7 +68,11 @@ export class UserService {
         status: HttpStatus.CREATED
       }
     } catch (error) {
-      throw new HttpException(error.message, error.status ?? 500)
+      let err_message = "Failed To Create User"
+      if (error.code == 11000) {
+        err_message = "Oops! It seems like there's already a user with the same user name, try another"
+      }
+      throw new HttpException(err_message, error.status ?? 500)
     }
   }
 
@@ -84,6 +89,12 @@ export class UserService {
       let expire_diff = new Date(data.expire_time).getTime() - new Date().getTime()
       if (expire_diff <= 0) {
         throw new Error("Link Expired")
+      }
+      let user_data = await this.userModel.findOne({
+        _id: data.user_id
+      })
+      if (user_data.verified) {
+        throw new Error("User Already Verified")
       }
       try {
         await this.userModel.updateOne({ _id: data.user_id }, {
@@ -184,24 +195,32 @@ export class UserService {
     try {
       let user_data = await this.userModel.findOne({ user_name: body["user_name"] }).exec();
       if (!user_data) {
-        throw new HttpException("Invalid User Name", HttpStatus.UNAUTHORIZED)
+        throw new HttpException("Invalid Credentials", HttpStatus.UNAUTHORIZED)
+      }
+      if (!user_data.verified) {
+        throw new Error("User Not Verified")
       }
       if (!(await bcrypt.compare(body["password"], user_data["password"]))) {
-        throw new HttpException("Invalid Password", HttpStatus.UNAUTHORIZED)
+        throw new HttpException("Invalid Credentials", HttpStatus.UNAUTHORIZED)
       }
-      await this.userModel.updateOne({ id: user_data["_id"] }, { last_login: new Date() })
+
+      let token = await this.authService.generateToken(
+        { username: body["user_name"], id: user_data["_id"] },
+        Number(process.env.USER_TOKEN_EXPIRY_IN_SEC)
+      )
+      await this.userModel.updateOne({ _id: user_data["_id"] }, { last_login: moment.utc() })
       return {
         message: "Success",
         status: HttpStatus.OK,
         data: {
-          token: await this.authService.generateToken(
-            { username: body["user_name"], id: user_data["_id"] },
-            Number(process.env.USER_TOKEN_EXPIRY_IN_SEC)
-          ),
+          token,
           name: user_data["name"],
           email: user_data["email"],
           id: user_data["_id"],
-          last_login: user_data["last_login"]
+          last_login: user_data["last_login"],
+          currency_icon: user_data["currency_icon_class"],
+          currency_code: user_data["currency_html_code"],
+          time_zone: user_data["time_zone"]
         }
       }
     } catch (error) {
