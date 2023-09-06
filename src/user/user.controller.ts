@@ -28,4 +28,9 @@ export class UserController {
     return this.userService.getAllUsers()
   }
 
+  @Patch("/:user_id")
+  updateUserDetails(@Param() object, @Body() body) {
+    return this.userService.updateUserDetails(object.user_id, body)
+  }
+
 }

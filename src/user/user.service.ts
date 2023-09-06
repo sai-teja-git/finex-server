@@ -170,9 +170,35 @@ export class UserService {
    * It returns a promise of an array of users
    * @returns An array of users
    */
-  async getAllUsers(): Promise<User[]> {
+  async getAllUsers() {
     try {
-      return this.userModel.find().exec();
+      return {
+        data: await this.userModel.find().exec(),
+        message: "User Details Fetched",
+        status: HttpStatus.OK
+      }
+    } catch (error) {
+      throw new HttpException(error.message, error.status ?? 500)
+    }
+  }
+
+  /**
+   * The function updates the details of a user with the given ID and returns a success message.
+   * @param id - The id parameter is the unique identifier of the user whose details need to be
+   * updated. It is used to find the user in the database.
+   * @param data - The `data` parameter is an object that contains the updated user details. It could
+   * include properties such as name, email, age, address, etc.
+   * @returns an object with two properties: "message" and "status". The "message" property is set to
+   * "User Details Updated" and the "status" property is set to the value of the "HttpStatus.OK"
+   * constant.
+   */
+  async updateUserDetails(id, data) {
+    try {
+      await this.userModel.updateOne({ _id: id }, data)
+      return {
+        message: "User Details Updated",
+        status: HttpStatus.OK
+      }
     } catch (error) {
       throw new HttpException(error.message, error.status ?? 500)
     }
@@ -218,9 +244,13 @@ export class UserService {
           email: user_data["email"],
           id: user_data["_id"],
           last_login: user_data["last_login"],
+          currency_id: user_data["currency_id"],
           currency_icon: user_data["currency_icon_class"],
           currency_code: user_data["currency_html_code"],
-          time_zone: user_data["time_zone"]
+          currency_name: user_data["currency_name"],
+          currency_name_plural: user_data["currency_name_plural"],
+          time_zone: user_data["time_zone"],
+          time_zone_id: user_data["time_zone_id"],
         }
       }
     } catch (error) {
