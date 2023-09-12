@@ -205,6 +205,37 @@ export class UserService {
   }
 
   /**
+   * The function updates a user's password in a database, checking if the old password provided
+   * matches the current password before updating it.
+   * @param id - The `id` parameter is the unique identifier of the user whose password needs to be
+   * updated. It is used to find the user in the database.
+   * @param data - The `data` parameter is an object that contains the user's old password and the new
+   * password they want to update to. It should have the following structure:
+   * @returns an object with two properties: "message" and "status". The "message" property contains
+   * the string "User Details Updated" and the "status" property contains the value of the
+   * HttpStatus.OK constant.
+   */
+  async updateUserPassword(id, data) {
+    try {
+      let user_data = await this.userModel.findOne({ _id: id }).exec();
+      if (!(await bcrypt.compare(data["old_password"], user_data["password"]))) {
+        throw new HttpException("Invalid Old Password", HttpStatus.FORBIDDEN)
+      }
+      const saltOrRounds = 10;
+      let new_password = await bcrypt.hash(data["new_password"], saltOrRounds);
+      await this.userModel.updateOne({ _id: id }, {
+        password: new_password
+      })
+      return {
+        message: "User Details Updated",
+        status: HttpStatus.OK
+      }
+    } catch (error) {
+      throw new HttpException(error.message, error.status ?? 500)
+    }
+  }
+
+  /**
    * It takes the user name and password from the request body, checks if the user exists in the
    * database, if it does, it checks if the password is correct, if it is, it updates the last login
    * time and returns a token and user data
@@ -221,13 +252,13 @@ export class UserService {
     try {
       let user_data = await this.userModel.findOne({ user_name: body["user_name"] }).exec();
       if (!user_data) {
-        throw new HttpException("Invalid Credentials", HttpStatus.UNAUTHORIZED)
+        throw new HttpException("Invalid Credentials", HttpStatus.FORBIDDEN)
       }
       if (!user_data.verified) {
         throw new Error("User Not Verified")
       }
       if (!(await bcrypt.compare(body["password"], user_data["password"]))) {
-        throw new HttpException("Invalid Credentials", HttpStatus.UNAUTHORIZED)
+        throw new HttpException("Invalid Credentials", HttpStatus.FORBIDDEN)
       }
 
       let token = await this.authService.generateToken(

@@ -28,6 +28,11 @@ export class UserController {
     return this.userService.getAllUsers()
   }
 
+  @Patch("password/:user_id")
+  updateUserPassword(@Param() object, @Body() body) {
+    return this.userService.updateUserPassword(object.user_id, body)
+  }
+
   @Patch("/:user_id")
   updateUserDetails(@Param() object, @Body() body) {
     return this.userService.updateUserDetails(object.user_id, body)
