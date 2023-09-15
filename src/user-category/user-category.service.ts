@@ -7,7 +7,7 @@ import { Model } from 'mongoose';
 export class UserCategoryService {
 
   constructor(
-    @InjectModel(USER_CATEGORY_TABLE) private userCategory: Model<UserCategoryModel>
+    @InjectModel(USER_CATEGORY_TABLE) private userCategoryModel: Model<UserCategoryModel>
   ) { }
 
   /**
@@ -22,7 +22,7 @@ export class UserCategoryService {
    */
   async insertUserCategories(body: any) {
     try {
-      await this.userCategory.create(body)
+      await this.userCategoryModel.create(body)
       return {
         message: "Categories Created",
         status: HttpStatus.CREATED
@@ -42,7 +42,7 @@ export class UserCategoryService {
    */
   async updateUserCatagories(body: any) {
     try {
-      await this.userCategory.updateOne({ _id: body.id }, {
+      await this.userCategoryModel.updateOne({ _id: body.id }, {
         ...body.updated_values
       })
       return {
@@ -55,17 +55,30 @@ export class UserCategoryService {
   }
 
   /**
-   * The function getAllUserCategories retrieves all user categories and returns them along with a
-   * status code.
-   * @returns an object with two properties: "data" and "status". The "data" property contains the
-   * result of executing the "find" method on the "userCategory" object, wrapped in an "await"
-   * statement. The "status" property is set to "HttpStatus.OK".
+   * The function `getUserCategories` retrieves spend and income categories for a specific user or all
+   * users.
+   * @param user_id - The `user_id` parameter is used to specify the ID of the user for which the
+   * categories should be fetched. If the value of `user_id` is set to `'all'`, it indicates that
+   * categories for all users should be fetched. Otherwise, it will fetch categories specific to the
+   * user with
+   * @returns an object with the following properties:
+   * - spend_categories: an array of user categories with type "spend"
+   * - income_categories: an array of user categories with type "income"
+   * - status: the HTTP status code (HttpStatus.OK)
+   * - message: a message indicating whether all user categories or specific user categories were
+   * fetched.
    */
-  async getAllUserCategories() {
+  async getUserCategories(user_id) {
     try {
+      let data = await this.userCategoryModel.find({ ...(user_id !== 'all' && { "user_id": user_id }) });
+      let user_categories = JSON.parse(JSON.stringify(data))
+      let spend_categories = user_categories.filter(e => e["type"] === "spend")
+      let income_categories = user_categories.filter(e => e["type"] === "income");
       return {
-        data: await this.userCategory.find().exec(),
-        status: HttpStatus.OK
+        spend_categories,
+        income_categories,
+        status: HttpStatus.OK,
+        message: (user_id === 'all' ? "fetched All Users Categories" : "Fetched User Categories")
       }
     } catch (error) {
       throw new HttpException(error.message, error.status ?? 500)

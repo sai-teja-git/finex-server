@@ -10,13 +10,13 @@ export class UserCategoryController {
     return this.userCategoryService.insertUserCategories(body)
   }
 
-  @Get()
-  getALLColors() {
-    return this.userCategoryService.getAllUserCategories()
-  }
-
   @Patch()
   updateUserCategories(@Body() body) {
     return this.userCategoryService.updateUserCatagories(body)
+  }
+
+  @Get("/:user_id")
+  getUserCategories(@Param() object) {
+    return this.userCategoryService.getUserCategories(object.user_id)
   }
 }
