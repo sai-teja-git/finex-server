@@ -40,11 +40,9 @@ export class UserCategoryService {
    * HttpStatus.OK, indicating a successful operation, and the "message" property is set to "Category
    * Updated".
    */
-  async updateUserCatagories(body: any) {
+  async updateUserCatagories(id, data: any) {
     try {
-      await this.userCategoryModel.updateOne({ _id: body.id }, {
-        ...body.updated_values
-      })
+      await this.userCategoryModel.updateOne({ _id: id }, data)
       return {
         status: HttpStatus.OK,
         message: "Category Updated"

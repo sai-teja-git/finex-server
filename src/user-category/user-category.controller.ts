@@ -10,9 +10,9 @@ export class UserCategoryController {
     return this.userCategoryService.insertUserCategories(body)
   }
 
-  @Patch()
-  updateUserCategories(@Body() body) {
-    return this.userCategoryService.updateUserCatagories(body)
+  @Patch("/:id")
+  updateUserCategories(@Param() object, @Body() body) {
+    return this.userCategoryService.updateUserCatagories(object.id, body)
   }
 
   @Get("/:user_id")
