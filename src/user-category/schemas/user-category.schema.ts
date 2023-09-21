@@ -4,7 +4,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 export class UserCategoryModel {
     @Prop({ type: String, required: true, index: true })
     user_id: string;
-    @Prop({ type: String, required: true })
+    @Prop({ type: String, required: true, unique: true })
     key: string;
     @Prop({ type: String, required: true })
     name: string;

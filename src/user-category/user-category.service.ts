@@ -28,7 +28,11 @@ export class UserCategoryService {
         status: HttpStatus.CREATED
       }
     } catch (error) {
-      throw new HttpException(error.message, error.status ?? 500)
+      let err_message = error.message ?? "Creation Failed"
+      if (error.code == 11000) {
+        err_message = "Oops! It seems like there's already a category with the same name, try another"
+      }
+      throw new HttpException(err_message, error.status ?? 500)
     }
   }
 
