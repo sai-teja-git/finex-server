@@ -38,31 +38,6 @@ export class TimeZoneService {
    */
   async getAllTimeZones() {
     try {
-      // let data = await this.timeZoneModel.find()
-      // let modified = JSON.parse(JSON.stringify(data));
-      // let update_arr = []
-      // for (let i = 0; i < modified.length; i++) {
-      //   let gmt_min_arr = modified[i].gmt_time.replace("GMT", "").split(":")
-      //   let gmt_minutes = (Number(gmt_min_arr[0]) * 60) + Number(gmt_min_arr[1])
-      //   update_arr.push(
-      //     {
-      //       updateOne: {
-      //         filter: {
-      //           _id: modified[i]._id
-      //         },
-      //         update: {
-      //           gmt_minutes
-      //         }
-      //       }
-      //     }
-      //   )
-      // }
-      // let up = await this.timeZoneModel.bulkWrite(update_arr)
-      // return {
-      //   data: up,
-      //   // data,
-      //   status: HttpStatus.OK
-      // }
       return {
         data: await this.timeZoneModel.find().exec(),
         status: HttpStatus.OK

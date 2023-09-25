@@ -13,6 +13,7 @@ import { ColorsModule } from './colors/colors.module';
 import { CategoryModule } from './category/category.module';
 import { UserCategoryModule } from './user-category/user-category.module';
 import { env } from 'process';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { env } from 'process';
     ColorsModule,
     CategoryModule,
     UserCategoryModule,
+    TransactionsModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
