@@ -82,54 +82,136 @@ export class TransactionsService {
     }
 
     /**
-     * The function retrieves overall spends, income, and estimations between a specified start and end
-     * time for a given user.
-     * @param {any} body - {
+     * The function retrieves overall spend, income, and estimation data between specified dates.
+     * @param {any} body - The `body` parameter is an object that contains the filters and criteria for
+     * fetching the overall spends between a certain period. It may include properties such as start
+     * date, end date, user ID, category, etc. These properties are used to create the aggregation
+     * pipeline for fetching the data from different models (`
      * @returns an object with the following properties:
      */
     async getOverallSpendsBetween(body: any) {
         try {
-            let debit_data = await this.userDebitsModel.aggregate([
-                {
-                    $match: {
-                        "user_id": body.user_id,
-                        "created_at": { $gt: moment.utc(body.start_time).toDate(), $lte: moment.utc(body.end_time).toDate() }
-                    }
-                },
-                {
-                    $set: {
-                        total: 0
-                    }
-                },
-                {
-                    $group: {
-                        _id: null,
-                        data: {
-                            $push: "$$ROOT"
-                        },
-                        total: { $sum: "$value" }
-                    }
-                },
+            const [debit_data, credit_data, estimation_data] = await Promise.all([
+                this.userDebitsModel.aggregate(this.createOverallTransactionsDataAggregation(body)),
+                this.userCreditsModel.aggregate(this.createOverallTransactionsDataAggregation(body)),
+                this.userEstimationModel.aggregate(this.createOverallTransactionsDataAggregation(body))
             ])
             return {
                 spend: {
-                    data: debit_data[0]?.data ?? [],
+                    day_wise: debit_data,
                     total: debit_data[0]?.total ?? 0,
+                    min: debit_data[0]?.min ?? 0,
+                    max: debit_data[0]?.max ?? 0,
+                    avg: debit_data[0]?.avg ?? 0,
                 },
-                // income: {
-                //     data: credit_data[0]?.data ?? [],
-                //     total: credit_data[0]?.total ?? 0,
-                // },
-                // estimation: {
-                //     data: estimation_data[0]?.data ?? [],
-                //     total: estimation_data[0]?.total ?? 0,
-                // },
-                message: "Created",
+                income: {
+                    day_wise: credit_data,
+                    total: credit_data[0]?.total ?? 0,
+                    min: credit_data[0]?.min ?? 0,
+                    max: credit_data[0]?.max ?? 0,
+                    avg: credit_data[0]?.avg ?? 0,
+                },
+                estimation: {
+                    day_wise: estimation_data,
+                    total: estimation_data[0]?.total ?? 0,
+                    min: estimation_data[0]?.min ?? 0,
+                    max: estimation_data[0]?.max ?? 0,
+                    avg: estimation_data[0]?.avg ?? 0,
+                },
+                message: "Fetched All Month Overall Transactions",
                 status: HttpStatus.OK
             }
         } catch (error) {
             throw new HttpException(error.message ?? "Failed to fetch data", error.status ?? 500)
         }
+    }
+
+    /**
+     * The function creates an aggregation pipeline in MongoDB to aggregate overall transaction data
+     * within a specified time range for a given user.
+     * @param {any} body - The `body` parameter is an object that contains the following properties:
+     * @returns an array of aggregation pipeline stages.
+     */
+    private createOverallTransactionsDataAggregation(body: any): any {
+        const one_day_in_sec = 60 * 60 * 24;
+        return [
+            {
+                $match: {
+                    "user_id": body.user_id,
+                    "created_at": { $gt: moment.utc(body.start_time).toDate(), $lte: moment.utc(body.end_time).toDate() }
+                }
+            },
+            {
+                $sort: { "created_at": 1 }
+            },
+            {
+                $set: {
+                    total: 0
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    total_data: {
+                        $push: "$$ROOT"
+                    },
+                    total: { $sum: "$value" },
+                    max: { "$max": { value: "$value", category_id: "$category_id" } },
+                    min: { "$min": "$value" },
+                    avg: { "$avg": "$value" }
+                }
+            },
+            { $unset: "_id" },
+            {
+                $addFields: {
+                    day: {
+                        $range: [
+                            { $toInt: { $divide: [{ $toLong: moment.utc(body.start_time).toDate() }, 1000] } },
+                            { $toInt: { $divide: [{ $toLong: moment.utc(body.end_time).toDate() }, 1000] } },
+                            one_day_in_sec
+                        ]
+                    }
+                }
+            },
+            {
+                $set: {
+                    day: {
+                        $map: {
+                            input: "$day",
+                            in: { $toDate: { $multiply: ["$$this", 1000] } }
+                        }
+                    }
+                }
+            },
+            { $unwind: "$day" },
+            {
+                $project: {
+                    data: {
+                        $filter: {
+                            input: "$total_data",
+                            cond: {
+                                $and: [
+                                    { $gt: ["$$this.created_at", "$day"] },
+                                    { $lte: ["$$this.created_at", { $add: ["$day", 1000 * one_day_in_sec] }] },
+                                ]
+                            }
+                        },
+                    },
+                    day: 1,
+                    total: 1,
+                    min: 1,
+                    max: 1,
+                    avg: 1
+                },
+            },
+            {
+                $match: {
+                    $expr: {
+                        $gt: [{ $size: "$data" }, 0]
+                    }
+                }
+            }
+        ]
     }
 
 }

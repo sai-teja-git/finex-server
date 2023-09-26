@@ -280,6 +280,7 @@ export class UserService {
           currency_code: user_data["currency_html_code"],
           currency_name: user_data["currency_name"],
           currency_name_plural: user_data["currency_name_plural"],
+          currency_decimal_digits: user_data["currency_decimal_digits"],
           time_zone: user_data["time_zone"],
           time_zone_id: user_data["time_zone_id"],
         }
