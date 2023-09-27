@@ -82,6 +82,37 @@ export class TransactionsService {
     }
 
     /**
+     * The function `deleteTransaction` deletes a transaction based on its type and ID, and returns a
+     * success message and status.
+     * @param {string} type - The `type` parameter is a string that specifies the type of transaction
+     * to be deleted. It can have three possible values: "credit", "debit", or "estimation".
+     * @param id - The `id` parameter is the unique identifier of the transaction that you want to
+     * delete. It is used to specify which transaction should be deleted from the respective model
+     * based on the `type` parameter.
+     * @returns an object with two properties: "message" and "status". The "message" property contains
+     * the string "Deleted" and the "status" property contains the value of the HttpStatus.OK constant.
+     */
+    async deleteTransaction(type: string, id) {
+        try {
+            if (type === "credit") {
+                await this.userCreditsModel.deleteOne({ _id: id })
+            } else if (type === "debit") {
+                await this.userDebitsModel.deleteOne({ _id: id })
+            } else if (type === "estimation") {
+                await this.userEstimationModel.deleteOne({ _id: id })
+            } else {
+                throw new Error("Invalid Type")
+            }
+            return {
+                message: "Deleted",
+                status: HttpStatus.OK
+            }
+        } catch (error) {
+            throw new HttpException(error.message ?? "Deleting Failed", error.status ?? 500)
+        }
+    }
+
+    /**
      * The function retrieves overall spend, income, and estimation data between specified dates.
      * @param {any} body - The `body` parameter is an object that contains the filters and criteria for
      * fetching the overall spends between a certain period. It may include properties such as start

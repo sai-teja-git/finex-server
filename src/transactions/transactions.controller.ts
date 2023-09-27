@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Query, Delete } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 
 @Controller('transactions')
@@ -18,6 +18,11 @@ export class TransactionsController {
   @Get("overall")
   getMonthOverallData(@Query() body) {
     return this.transactionsService.getOverallSpendsBetween(body)
+  }
+
+  @Delete()
+  deleteTransaction(@Query() body) {
+    return this.transactionsService.deleteTransaction(body.type, body.id)
   }
 
 }
