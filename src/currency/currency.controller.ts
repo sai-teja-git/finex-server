@@ -6,12 +6,12 @@ export class CurrencyController {
   constructor(private readonly currencyService: CurrencyService) { }
 
   @Post()
-  insertTimeZoneData(@Body() body) {
+  insertCurrencyData(@Body() body) {
     return this.currencyService.insertCurrencyData(body)
   }
 
   @Get()
-  getTimeZones() {
+  getAllCurrency() {
     return this.currencyService.getAllCurrency()
   }
 

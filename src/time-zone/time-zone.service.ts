@@ -1,14 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { TIME_ZONE_TABLE } from './time-zone.schema';
+import { TIME_ZONE_TABLE, TimeZoneModel } from './schemas/time-zone.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { TimeZone } from './time-zone.interface';
+import * as moment from "moment-timezone"
 
 @Injectable()
 export class TimeZoneService {
 
   constructor(
-    @InjectModel(TIME_ZONE_TABLE) private timeZoneModel: Model<TimeZone>,
+    @InjectModel(TIME_ZONE_TABLE) private timeZoneModel: Model<TimeZoneModel>,
   ) { }
 
   /**
@@ -38,7 +38,10 @@ export class TimeZoneService {
    */
   async getAllTimeZones() {
     try {
-      return this.timeZoneModel.find().exec();
+      return {
+        data: await this.timeZoneModel.find().exec(),
+        status: HttpStatus.OK
+      }
     } catch (error) {
       throw new HttpException(error.message, error.status ?? 500)
     }
@@ -55,7 +58,7 @@ export class TimeZoneService {
        * ```
        * need T and Z for the zone conversion, for filtering the mongodb
        */
-      return this.timeZoneModel.find({ updated_at: { $gte: body.start_time, $lte: body.end_time } })
+      return this.timeZoneModel.find({ updated_at: { $gte: moment.utc(body.start_time).toDate(), $lte: moment.utc(body.end_time).toDate() } })
     } catch (error) {
       throw new HttpException(error.message, error.status ?? 500)
     }

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TimeZoneService } from './time-zone.service';
 import { TimeZoneController } from './time-zone.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { TIME_ZONE_TABLE, TimeZoneSchema } from './time-zone.schema';
+import { TIME_ZONE_TABLE, TimeZoneSchema } from './schemas/time-zone.schema';
 
 @Module({
   imports: [

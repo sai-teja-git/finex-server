@@ -8,6 +8,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { TimeZoneModule } from './time-zone/time-zone.module';
 import { CurrencyModule } from './currency/currency.module';
 import { MailService } from './common/services/mail/mail.service';
+import { IconsModule } from './icons/icons.module';
+import { ColorsModule } from './colors/colors.module';
+import { CategoryModule } from './category/category.module';
+import { UserCategoryModule } from './user-category/user-category.module';
+import { env } from 'process';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
   imports: [
@@ -15,10 +21,19 @@ import { MailService } from './common/services/mail/mail.service';
     ConfigModule.forRoot({
       isGlobal: true
     }),
-    MongooseModule.forRoot(process.env.MONGO_DB_CLOUD_URL),
+    MongooseModule.forRootAsync({
+      useFactory: () => ({
+        uri: env.MONGO_DB_CLOUD_URL,
+      }),
+    }),
     UserModule,
     TimeZoneModule,
     CurrencyModule,
+    IconsModule,
+    ColorsModule,
+    CategoryModule,
+    UserCategoryModule,
+    TransactionsModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
