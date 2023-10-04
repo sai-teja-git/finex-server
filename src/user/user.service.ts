@@ -9,16 +9,24 @@ import { CATEGORY_TABLE, CategoryModel } from 'src/category/schemas/category.sch
 import { USER_CATEGORY_TABLE, UserCategoryModel } from 'src/user-category/schemas/user-category.schema';
 import { MailService } from 'src/common/services/mail/mail.service';
 import * as moment from "moment-timezone"
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UserService {
 
   constructor(
-    @InjectModel(USER_TABLE) private readonly userModel: Model<UserModel>,
-    @InjectModel(CATEGORY_TABLE) private readonly categoryModel: Model<CategoryModel>,
-    @InjectModel(USER_CATEGORY_TABLE) private readonly userCategoryModel: Model<UserCategoryModel>,
+    @InjectModel(USER_TABLE)
+    private readonly userModel: Model<UserModel>,
+
+    @InjectModel(CATEGORY_TABLE)
+    private readonly categoryModel: Model<CategoryModel>,
+
+    @InjectModel(USER_CATEGORY_TABLE)
+    private readonly userCategoryModel: Model<UserCategoryModel>,
+
     private readonly mailService: MailService,
-    private authService: AuthService
+    private readonly authService: AuthService,
+    private readonly jwtService: JwtService
   ) { }
 
   /**
@@ -44,7 +52,9 @@ export class UserService {
         expire_time: new Date(new Date().setDate(new Date().getDate() + 1))
       }
       console.log("data_for_verification", data_for_verification)
-      let verification_link = req.headers.origin + "/email-verification?data=" + btoa(JSON.stringify(data_for_verification))
+      // let verification_link = req.headers.origin + "/email-verification?data=" + btoa(JSON.stringify(data_for_verification))
+      const token = this.jwtService.sign({ user_id: user_data._id }, { expiresIn: "1d", secret: "HelloWorld" })
+      const verification_link = `${req.headers.origin}/email-verification?data=${token}`
       try {
         let mail_body = {
           to: [
