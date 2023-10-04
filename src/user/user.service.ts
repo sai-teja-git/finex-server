@@ -36,12 +36,14 @@ export class UserService {
     try {
       const saltOrRounds = 10;
       body["password"] = await bcrypt.hash(body["password"], saltOrRounds);
+      console.log("body after bcrypt", body)
       let user_data = await this.userModel.create(body);
       let data_for_verification = {
         user_id: user_data._id,
         generated_at: new Date(),
         expire_time: new Date(new Date().setDate(new Date().getDate() + 1))
       }
+      console.log("data_for_verification", data_for_verification)
       let verification_link = req.headers.origin + "/email-verification?data=" + btoa(JSON.stringify(data_for_verification))
       try {
         let mail_body = {
@@ -68,6 +70,7 @@ export class UserService {
         status: HttpStatus.CREATED
       }
     } catch (error) {
+      console.log("error in signup", error)
       let err_message = "Failed To Create User"
       if (error.code == 11000) {
         err_message = "Oops! It seems like there's already a user with the same user name, try another"
