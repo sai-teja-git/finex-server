@@ -9,8 +9,8 @@ export class UserController {
   ) { }
 
   @Post("signup")
-  signUpUser(@Body() body: CreateUserDto, @Req() req) {
-    return this.userService.signUpUser(body, req)
+  signUpUser(@Body() body: CreateUserDto) {
+    return this.userService.signUpUser(body)
   }
 
   @Post("login")

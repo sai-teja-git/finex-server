@@ -2,9 +2,9 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 
 @Schema({ timestamps: { createdAt: "created_at", updatedAt: "updated_at" }, versionKey: false })
 export class UserCategoryModel {
-    @Prop({ type: String, required: true, index: true })
+    @Prop({ type: String, required: true })
     user_id: string;
-    @Prop({ type: String, required: true, unique: true })
+    @Prop({ type: String, required: true })
     key: string;
     @Prop({ type: String, required: true })
     name: string;
@@ -20,4 +20,5 @@ export class UserCategoryModel {
     type: string;
 }
 export const UserCategorySchema = SchemaFactory.createForClass(UserCategoryModel);
+UserCategorySchema.index({ user_id: 1, key: 1 }, { unique: true })
 export const USER_CATEGORY_TABLE = "user_category"

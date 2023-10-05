@@ -10,6 +10,7 @@ import { USER_CATEGORY_TABLE, UserCategoryModel } from 'src/user-category/schema
 import { MailService } from 'src/common/services/mail/mail.service';
 import * as moment from "moment-timezone"
 import { JwtService } from '@nestjs/jwt';
+import { env } from 'process';
 
 @Injectable()
 export class UserService {
@@ -31,30 +32,30 @@ export class UserService {
 
   /**
    * The function `signUpUser` is an asynchronous function that creates a new user, hashes their
-   * password, generates a verification link, sends a verification email, and returns a success
-   * message.
+   * password, generates a verification token, sends a verification email, and returns a success
+   * message with the user ID.
    * @param body - The `body` parameter is an object that contains the user data needed for signing up.
    * It typically includes properties such as `name`, `email`, and `password`.
    * @returns an object with the following properties:
    * - user_id: The ID of the created user.
-   * - message: A message indicating that the user has been created.
-   * - status: The HTTP status code for the response, which is HttpStatus.CREATED.
+   * - message: A message indicating that the user was created.
+   * - status: The HTTP status code indicating that the user was created (HttpStatus.CREATED).
    */
-  async signUpUser(body, req: any) {
+  async signUpUser(body) {
+    let user_data: any = null;
     try {
       const saltOrRounds = 10;
       body["password"] = await bcrypt.hash(body["password"], saltOrRounds);
       console.log("body after bcrypt", body)
-      let user_data = await this.userModel.create(body);
+      user_data = await this.userModel.create(body);
       let data_for_verification = {
         user_id: user_data._id,
         generated_at: new Date(),
         expire_time: new Date(new Date().setDate(new Date().getDate() + 1))
       }
       console.log("data_for_verification", data_for_verification)
-      // let verification_link = req.headers.origin + "/email-verification?data=" + btoa(JSON.stringify(data_for_verification))
-      const token = this.jwtService.sign({ user_id: user_data._id }, { expiresIn: "1d", secret: "HelloWorld" })
-      const verification_link = `${req.headers.origin}/email-verification?data=${token}`
+      const token = this.jwtService.sign({ user_id: user_data._id }, { expiresIn: "1d", secret: env.JWT_SECRET_KEY })
+      const verification_link = `${env.UI_DOMAIN}/email-verification?code=${token}`;
       try {
         let mail_body = {
           to: [
@@ -80,7 +81,10 @@ export class UserService {
         status: HttpStatus.CREATED
       }
     } catch (error) {
-      console.log("error in signup", error)
+      console.log("error in signup", error, "user data", user_data)
+      try {
+        await this.userModel.deleteOne({ _id: user_data._id })
+      } catch { }
       let err_message = "Failed To Create User"
       if (error.code == 11000) {
         err_message = "Oops! It seems like there's already a user with the same user name, try another"
@@ -90,27 +94,40 @@ export class UserService {
   }
 
   /**
-   * The `verifyUser` function is an asynchronous function that verifies a user by updating their
-   * verification status, inserting user categories, and returning a success message.
-   * @param {any} data - The `data` parameter is an object that contains the following properties:
+   * The `verifyUser` function is an asynchronous function that decodes and verifies a JWT token,
+   * updates the user's verification status, inserts user categories, and returns a success message if
+   * successful.
+   * @param {any} req_data - The `req_data` parameter is an object that contains the following
+   * properties:
    * @returns an object with two properties: "message" and "status". The "message" property contains
-   * the string "User Verified" and the "status" property contains the value of the constant
+   * the string "User Verified", and the "status" property contains the value of the constant
    * "HttpStatus.CREATED".
    */
-  async verifyUser(data: any) {
+  async verifyUser(req_data: any) {
     try {
-      let expire_diff = new Date(data.expire_time).getTime() - new Date().getTime()
-      if (expire_diff <= 0) {
-        throw new Error("Link Expired")
+      let user_req_data: any = this.jwtService.decode(req_data.code)
+      try {
+        await this.jwtService.verifyAsync(
+          req_data.code,
+          {
+            secret: env.JWT_SECRET_KEY
+          }
+        );
+      } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+          throw new Error("Link Expired")
+        } else {
+          throw new Error("Invalid Link")
+        }
       }
       let user_data = await this.userModel.findOne({
-        _id: data.user_id
+        _id: user_req_data.user_id
       })
       if (user_data.verified) {
         throw new Error("User Already Verified")
       }
       try {
-        await this.userModel.updateOne({ _id: data.user_id }, {
+        await this.userModel.updateOne({ _id: user_req_data.user_id }, {
           verified: true
         })
       } catch {
@@ -128,13 +145,13 @@ export class UserService {
         try {
           delete category["updated_at"]
         } catch { }
-        return Object.assign({ user_id: data.user_id }, category)
+        return Object.assign({ user_id: user_req_data.user_id }, category)
       })
       try {
         await this.userCategoryModel.insertMany(user_category_to_insert)
       } catch (error) {
         try {
-          await this.userModel.updateOne({ _id: data.user_id }, {
+          await this.userModel.updateOne({ _id: user_req_data.user_id }, {
             verified: false
           })
         } catch {

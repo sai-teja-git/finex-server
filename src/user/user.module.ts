@@ -7,11 +7,13 @@ import { AuthModule } from '../auth/auth.module';
 import { CategoryModule } from 'src/category/category.module';
 import { UserCategoryModule } from 'src/user-category/user-category.module';
 import { MailService } from 'src/common/services/mail/mail.service';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: USER_TABLE, schema: UserSchema }]),
     AuthModule,
+    JwtModule,
     forwardRef(() => CategoryModule),
     forwardRef(() => UserCategoryModule)
   ],
