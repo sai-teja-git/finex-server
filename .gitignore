@@ -36,3 +36,6 @@ lerna-debug.log*
 
 # env
 /.env
+
+# package lock for deployment node versions
+package-lock.json
