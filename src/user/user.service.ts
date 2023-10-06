@@ -46,14 +46,12 @@ export class UserService {
     try {
       const saltOrRounds = 10;
       body["password"] = await bcrypt.hash(body["password"], saltOrRounds);
-      console.log("body after bcrypt", body)
       user_data = await this.userModel.create(body);
       let data_for_verification = {
         user_id: user_data._id,
         generated_at: new Date(),
         expire_time: new Date(new Date().setDate(new Date().getDate() + 1))
       }
-      console.log("data_for_verification", data_for_verification)
       const token = this.jwtService.sign({ user_id: user_data._id }, { expiresIn: "1d", secret: env.JWT_SECRET_KEY })
       const verification_link = `${env.UI_DOMAIN}/email-verification?code=${token}`;
       try {
@@ -81,7 +79,6 @@ export class UserService {
         status: HttpStatus.CREATED
       }
     } catch (error) {
-      console.log("error in signup", error, "user data", user_data)
       try {
         await this.userModel.deleteOne({ _id: user_data._id })
       } catch { }
