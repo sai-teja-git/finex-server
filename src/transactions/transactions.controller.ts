@@ -20,6 +20,11 @@ export class TransactionsController {
     return this.transactionsService.getOverallSpendsBetween(body)
   }
 
+  @Get("year-avg")
+  getyearAverage(@Query() body) {
+    return this.transactionsService.getYearAverage(body)
+  }
+
   @Delete()
   deleteTransaction(@Query() body) {
     return this.transactionsService.deleteTransaction(body.type, body.id)
