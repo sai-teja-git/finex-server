@@ -285,4 +285,44 @@ export class TransactionsService {
         }
     }
 
+    async getMonthCategoryWiseDebits(body: any) {
+        try {
+            let debit_data = await this.userDebitsModel.aggregate([
+                {
+                    $match: {
+                        "user_id": body.user_id,
+                        "created_at": { $gt: moment.utc(body.start_time).toDate(), $lte: moment.utc(body.end_time).toDate() }
+                    },
+                },
+                {
+                    $sort: { "created_at": 1 }
+                },
+                {
+                    $set: {
+                        total: 0
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$category_id",
+                        total_data: {
+                            $push: "$$ROOT"
+                        },
+                        total: { $sum: "$value" },
+                        max: { "$max": { value: "$value", category_id: "$category_id" } },
+                        min: { "$min": "$value" },
+                        avg: { "$avg": "$value" }
+                    }
+                },
+            ])
+            return {
+                average: debit_data,
+                message: "Fetched All Month Overall Category Wise Debits",
+                status: HttpStatus.OK
+            }
+        } catch (error) {
+            throw new HttpException(error.message ?? "Failed to fetch data", error.status ?? 500)
+        }
+    }
+
 }

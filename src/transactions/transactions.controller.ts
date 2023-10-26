@@ -25,6 +25,11 @@ export class TransactionsController {
     return this.transactionsService.getYearAverage(body)
   }
 
+  @Get("overall-category-wise")
+  getMonthOverallCategoryWiseData(@Query() body) {
+    return this.transactionsService.getMonthCategoryWiseDebits(body)
+  }
+
   @Delete()
   deleteTransaction(@Query() body) {
     return this.transactionsService.deleteTransaction(body.type, body.id)
