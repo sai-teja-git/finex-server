@@ -30,6 +30,11 @@ export class TransactionsController {
     return this.transactionsService.getMonthCategoryWiseDebits(body)
   }
 
+  @Get("category-month")
+  getSingleCategoryMonthData(@Query() body) {
+    return this.transactionsService.getSingleCategoryMonthData(body)
+  }
+
   @Delete()
   deleteTransaction(@Query() body) {
     return this.transactionsService.deleteTransaction(body.type, body.id)

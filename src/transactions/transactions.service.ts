@@ -169,6 +169,7 @@ export class TransactionsService {
             {
                 $match: {
                     "user_id": body.user_id,
+                    ...(body.category_id && { category_id: body.category_id }),
                     "created_at": { $gt: moment.utc(body.start_time).toDate(), $lte: moment.utc(body.end_time).toDate() }
                 }
             },
@@ -285,17 +286,23 @@ export class TransactionsService {
         }
     }
 
+    /**
+     * The function `getMonthCategoryWiseDebits` retrieves aggregated debit data for a specific user
+     * within a given time range, grouped by category.
+     * @param {any} body - The `body` parameter is an object that contains the following properties:
+     * @returns an object with the following properties:
+     * - data: an object containing the aggregated data grouped by category_id
+     * - message: a string message indicating the success of the operation
+     * - status: an HTTP status code indicating the success of the operation (HttpStatus.OK)
+     */
     async getMonthCategoryWiseDebits(body: any) {
         try {
-            let debit_data = await this.userDebitsModel.aggregate([
+            let query_data = await this.userDebitsModel.aggregate([
                 {
                     $match: {
                         "user_id": body.user_id,
                         "created_at": { $gt: moment.utc(body.start_time).toDate(), $lte: moment.utc(body.end_time).toDate() }
                     },
-                },
-                {
-                    $sort: { "created_at": 1 }
                 },
                 {
                     $set: {
@@ -305,19 +312,51 @@ export class TransactionsService {
                 {
                     $group: {
                         _id: "$category_id",
-                        total_data: {
-                            $push: "$$ROOT"
-                        },
+                        count: { $sum: 1 },
                         total: { $sum: "$value" },
-                        max: { "$max": { value: "$value", category_id: "$category_id" } },
+                        max: { "$max": "$value" },
                         min: { "$min": "$value" },
                         avg: { "$avg": "$value" }
                     }
                 },
+
             ])
+            let data = {}
+            for (let item of query_data) {
+                data[item._id] = item
+            }
             return {
-                average: debit_data,
+                data,
                 message: "Fetched All Month Overall Category Wise Debits",
+                status: HttpStatus.OK
+            }
+        } catch (error) {
+            throw new HttpException(error.message ?? "Failed to fetch data", error.status ?? 500)
+        }
+    }
+
+    /**
+     * The function `getSingleCategoryMonthData` fetches data for a single category for a specific
+     * month and returns aggregated information about the transactions.
+     * @param {any} body - The `body` parameter is an object that contains the necessary information
+     * for fetching the single category month data. It may include properties such as the category
+     * name, month, and any other relevant filters or options needed for the query.
+     * @returns an object with the following properties:
+     * - data: The result of the aggregation query performed on the userDebitsModel.
+     * - total: The total value from the data array, or 0 if it is undefined.
+     * - min: The minimum value from the data array, or 0 if it is undefined.
+     * - max: The value of the max property from the first element of
+     */
+    async getSingleCategoryMonthData(body: any) {
+        try {
+            let data = await this.userDebitsModel.aggregate(this.createOverallTransactionsDataAggregation(body))
+            return {
+                data,
+                total: data[0]?.total ?? 0,
+                min: data[0]?.min ?? 0,
+                max: data[0]?.max?.value ?? 0,
+                avg: data[0]?.avg ?? 0,
+                message: "Fetched All Month Category Debits",
                 status: HttpStatus.OK
             }
         } catch (error) {
