@@ -47,11 +47,6 @@ export class UserService {
       const saltOrRounds = 10;
       body["password"] = await bcrypt.hash(body["password"], saltOrRounds);
       user_data = await this.userModel.create(body);
-      let data_for_verification = {
-        user_id: user_data._id,
-        generated_at: new Date(),
-        expire_time: new Date(new Date().setDate(new Date().getDate() + 1))
-      }
       const token = this.jwtService.sign({ user_id: user_data._id }, { expiresIn: "1d", secret: env.JWT_SECRET_KEY })
       const verification_link = `${env.UI_DOMAIN}/email-verification?code=${token}`;
       try {
@@ -314,6 +309,51 @@ export class UserService {
       }
     } catch (error) {
       throw new HttpException(error.message, error.status ?? 500)
+    }
+  }
+
+  /**
+   * The function `sendForgetPasswordLink` sends a forget password link to the user's email address if
+   * the provided username and email match the database records.
+   * @param {any} body - The `body` parameter is an object that contains the following properties:
+   * @returns an object with two properties: "message" and "status". The "message" property contains
+   * the string "Reset link sent" and the "status" property contains the value of the
+   * HttpStatus.CREATED constant.
+   */
+  async sendForgetPasswordLink(body: any) {
+    try {
+      const user_data = await this.userModel.findOne({
+        user_name: body.user_name
+      })
+      if (!user_data) {
+        throw new HttpException("User Name not found", HttpStatus.FORBIDDEN)
+      }
+      if (user_data.email !== body.email) {
+        throw new Error("Mail is not linked with this username")
+      }
+      const token = this.jwtService.sign({ user_id: user_data._id }, { expiresIn: "5m", secret: env.JWT_SECRET_KEY })
+      const verification_link = `${env.UI_DOMAIN}/reset-password?code=${token}`;
+      let mail_body = {
+        to: [
+          body.email,
+        ],
+        title: "Reset password",
+        subject: "Update your password",
+        template: "forget_password",
+        "context": {
+          "name": body.name,
+          "verify_link": verification_link,
+          "attachments": []
+        }
+      }
+      await this.sendMail(mail_body)
+      return {
+        message: "Reset link sent",
+        status: HttpStatus.CREATED
+      }
+    } catch (error) {
+      let err_message = error.message ? error.message : "Failed To send link"
+      throw new HttpException(err_message, error.status ?? 500)
     }
   }
 

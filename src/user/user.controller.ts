@@ -23,6 +23,11 @@ export class UserController {
     return this.userService.verifyUser(body)
   }
 
+  @Post("reset-password")
+  sendPasswordLink(@Body() body) {
+    return this.userService.sendForgetPasswordLink(body)
+  }
+
   @Get()
   getAllUsers() {
     return this.userService.getAllUsers()
