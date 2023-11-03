@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, LoginDto } from './dto/create-user.dto';
 
@@ -38,9 +38,19 @@ export class UserController {
     return this.userService.updateUserPassword(object.user_id, body)
   }
 
+  @Patch("override-password")
+  resetUserPassword(@Body() body) {
+    return this.userService.resetUserPassword(body)
+  }
+
   @Patch("/:user_id")
   updateUserDetails(@Param() object, @Body() body) {
     return this.userService.updateUserDetails(object.user_id, body)
+  }
+
+  @Delete("/:user_id")
+  removeUser(@Param() object) {
+    return this.userService.deleteUser(object.user_id)
   }
 
 }

@@ -8,6 +8,7 @@ import { CategoryModule } from 'src/category/category.module';
 import { UserCategoryModule } from 'src/user-category/user-category.module';
 import { MailService } from 'src/common/services/mail/mail.service';
 import { JwtModule } from '@nestjs/jwt';
+import { TransactionsModule } from 'src/transactions/transactions.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { JwtModule } from '@nestjs/jwt';
     AuthModule,
     JwtModule,
     forwardRef(() => CategoryModule),
-    forwardRef(() => UserCategoryModule)
+    forwardRef(() => UserCategoryModule),
+    forwardRef(() => TransactionsModule)
   ],
   controllers: [UserController],
   providers: [

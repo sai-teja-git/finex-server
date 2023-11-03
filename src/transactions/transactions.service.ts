@@ -10,9 +10,14 @@ import * as moment from "moment-timezone"
 export class TransactionsService {
 
     constructor(
-        @InjectModel(USER_CREDITS_TABLE) private userCreditsModel: Model<UserCreditsModel>,
-        @InjectModel(USER_DEBITS_TABLE) private userDebitsModel: Model<UserDebitsModel>,
-        @InjectModel(USER_ESTIMATIONS_TABLE) private userEstimationModel: Model<UserEstimationsModel>
+        @InjectModel(USER_CREDITS_TABLE)
+        private userCreditsModel: Model<UserCreditsModel>,
+
+        @InjectModel(USER_DEBITS_TABLE)
+        private userDebitsModel: Model<UserDebitsModel>,
+
+        @InjectModel(USER_ESTIMATIONS_TABLE)
+        private userEstimationModel: Model<UserEstimationsModel>
     ) { }
 
     /**

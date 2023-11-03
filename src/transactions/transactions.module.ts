@@ -24,6 +24,7 @@ import { USER_ESTIMATIONS_TABLE, UserEstimationsSchema } from './schemas/user-es
     ])
   ],
   controllers: [TransactionsController],
-  providers: [TransactionsService]
+  providers: [TransactionsService],
+  exports: [MongooseModule]
 })
 export class TransactionsModule { }

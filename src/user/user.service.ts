@@ -1,7 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Connection, Model } from 'mongoose';
-import { User } from './user.interface';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { USER_TABLE, UserModel } from './schemas/user.schema';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../auth/auth.service';
@@ -11,6 +10,9 @@ import { MailService } from 'src/common/services/mail/mail.service';
 import * as moment from "moment-timezone"
 import { JwtService } from '@nestjs/jwt';
 import { env } from 'process';
+import { USER_CREDITS_TABLE, UserCreditsModel } from 'src/transactions/schemas/user-credits.schema';
+import { USER_ESTIMATIONS_TABLE, UserEstimationsModel } from 'src/transactions/schemas/user-estimations.schema';
+import { USER_DEBITS_TABLE, UserDebitsModel } from 'src/transactions/schemas/user-debits.schema';
 
 @Injectable()
 export class UserService {
@@ -24,6 +26,15 @@ export class UserService {
 
     @InjectModel(USER_CATEGORY_TABLE)
     private readonly userCategoryModel: Model<UserCategoryModel>,
+
+    @InjectModel(USER_CREDITS_TABLE)
+    private userCreditsModel: Model<UserCreditsModel>,
+
+    @InjectModel(USER_DEBITS_TABLE)
+    private userDebitsModel: Model<UserDebitsModel>,
+
+    @InjectModel(USER_ESTIMATIONS_TABLE)
+    private userEstimationModel: Model<UserEstimationsModel>,
 
     private readonly mailService: MailService,
     private readonly authService: AuthService,
@@ -82,6 +93,32 @@ export class UserService {
         err_message = "Oops! It seems like there's already a user with the same user name, try another"
       }
       throw new HttpException(err_message, error.status ?? 500)
+    }
+  }
+
+  /**
+   * The deleteUser function deletes a user and all related data from multiple collections in a
+   * database.
+   * @param {string} user_id - The `user_id` parameter is a string that represents the unique
+   * identifier of the user to be deleted.
+   * @returns an object with two properties: "message" and "status". The "message" property is set to
+   * "User Removed" and the "status" property is set to "HttpStatus.CREATED".
+   */
+  async deleteUser(user_id: string) {
+    try {
+      await Promise.all([
+        this.userCategoryModel.deleteMany({ user_id }),
+        this.userCreditsModel.deleteMany({ user_id }),
+        this.userEstimationModel.deleteMany({ user_id }),
+        this.userDebitsModel.deleteMany({ user_id }),
+        this.userModel.deleteOne({ _id: user_id })
+      ])
+      return {
+        message: "User Removed",
+        status: HttpStatus.CREATED
+      }
+    } catch (error) {
+      throw new HttpException(error.message ?? "delete failed", error.status ?? 500)
     }
   }
 
@@ -332,7 +369,7 @@ export class UserService {
         throw new Error("Mail is not linked with this username")
       }
       const token = this.jwtService.sign({ user_id: user_data._id }, { expiresIn: "5m", secret: env.JWT_SECRET_KEY })
-      const verification_link = `${env.UI_DOMAIN}/reset-password?code=${token}`;
+      const password_link = `${env.UI_DOMAIN}/reset-password?code=${token}`;
       let mail_body = {
         to: [
           body.email,
@@ -341,8 +378,8 @@ export class UserService {
         subject: "Update your password",
         template: "forget_password",
         "context": {
-          "name": body.name,
-          "verify_link": verification_link,
+          "name": user_data.name,
+          "passowrd_link": password_link,
           "attachments": []
         }
       }
@@ -354,6 +391,55 @@ export class UserService {
     } catch (error) {
       let err_message = error.message ? error.message : "Failed To send link"
       throw new HttpException(err_message, error.status ?? 500)
+    }
+  }
+
+  /**
+   * The function `resetUserPassword` is an asynchronous function that resets a user's password based
+   * on a provided code, verifies the code, checks if the user is verified, hashes the new password,
+   * updates the user's password in the database, and returns a success message.
+   * @param {any} body - The `body` parameter is an object that contains the following properties:
+   * @returns an object with two properties: "message" and "status". The "message" property contains
+   * the string "User Password Updated" and the "status" property contains the value
+   * HttpStatus.CREATED.
+   */
+  async resetUserPassword(body: any) {
+    try {
+      let user_req_data: any = this.jwtService.decode(body.code)
+      try {
+        await this.jwtService.verifyAsync(
+          body.code,
+          {
+            secret: env.JWT_SECRET_KEY
+          }
+        );
+      } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+          throw new Error("Link Expired")
+        } else {
+          throw new Error("Invalid Link")
+        }
+      }
+      let user_data = await this.userModel.findOne({
+        _id: user_req_data.user_id
+      })
+      if (!user_data.verified) {
+        throw new Error("User Not Verified")
+      }
+      const saltOrRounds = 10;
+      let new_password = await bcrypt.hash(body["password"], saltOrRounds);
+      if (user_data.password === new_password) {
+        throw new Error("New Password can't be old one, try another")
+      }
+      await this.userModel.updateOne({ _id: user_req_data.user_id }, {
+        password: new_password
+      })
+      return {
+        message: "User Password Updated",
+        status: HttpStatus.CREATED,
+      }
+    } catch (error) {
+      throw new HttpException(error.message ?? "Invalid Link", error.status ?? 500)
     }
   }
 
