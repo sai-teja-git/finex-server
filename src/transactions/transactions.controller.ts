@@ -20,9 +20,9 @@ export class TransactionsController {
     return this.transactionsService.getOverallSpendsBetween(body)
   }
 
-  @Get("year-avg")
+  @Get("year-total")
   getyearAverage(@Query() body) {
-    return this.transactionsService.getYearAverage(body)
+    return this.transactionsService.getYearTotal(body)
   }
 
   @Get("overall-category-wise")

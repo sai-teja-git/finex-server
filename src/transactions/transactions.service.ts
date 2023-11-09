@@ -252,15 +252,16 @@ export class TransactionsService {
     }
 
     /**
-     * The function `getYearAverage` calculates the average value of debit transactions for a given
-     * user within a specified time range.
+     * The function `getYearTotal` retrieves the total debit value for a specific user within a given
+     * time range.
      * @param {any} body - The `body` parameter is an object that contains the following properties:
      * @returns an object with the following properties:
-     * - average: The average value of the debit transactions for the specified user and time range.
+     * - total: The total value of debit transactions for the specified user within the specified time
+     * range.
      * - message: A message indicating that all month overall transactions have been fetched.
      * - status: The HTTP status code indicating the success of the operation (HttpStatus.OK).
      */
-    async getYearAverage(body: any) {
+    async getYearTotal(body: any) {
         try {
             let debit_data = await this.userDebitsModel.aggregate([
                 {
@@ -271,18 +272,18 @@ export class TransactionsService {
                 },
                 {
                     $set: {
-                        average: 0
+                        total: 0
                     }
                 },
                 {
                     $group: {
                         _id: null,
-                        average: { $avg: "$value" },
+                        total: { $sum: "$value" },
                     }
                 },
             ])
             return {
-                average: debit_data[0]?.average ? debit_data[0].average : 0,
+                total: debit_data[0]?.total ? debit_data[0].total : 0,
                 message: "Fetched All Month Overall Transactions",
                 status: HttpStatus.OK
             }
