@@ -25,9 +25,14 @@ export class TransactionsController {
     return this.transactionsService.getYearTotal(body)
   }
 
+  @Get("overall-category-wise-debits")
+  getMonthOverallCategoryWiseDebits(@Query() body) {
+    return this.transactionsService.getMonthCategoryWiseDebits(body)
+  }
+
   @Get("overall-category-wise")
   getMonthOverallCategoryWiseData(@Query() body) {
-    return this.transactionsService.getMonthCategoryWiseDebits(body)
+    return this.transactionsService.getMonthCategoryWiseOverallData(body)
   }
 
   @Get("category-month")

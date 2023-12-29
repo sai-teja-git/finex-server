@@ -79,7 +79,6 @@ export class TransactionsService {
             }
             return {
                 message: "Created",
-                status: HttpStatus.OK
             }
         } catch (error) {
             throw new HttpException(error.message ?? "Update Failed", error.status ?? 500)
@@ -110,7 +109,6 @@ export class TransactionsService {
             }
             return {
                 message: "Deleted",
-                status: HttpStatus.OK
             }
         } catch (error) {
             throw new HttpException(error.message ?? "Deleting Failed", error.status ?? 500)
@@ -155,7 +153,6 @@ export class TransactionsService {
                     avg: estimation_data[0]?.avg ?? 0,
                 },
                 message: "Fetched All Month Overall Transactions",
-                status: HttpStatus.OK
             }
         } catch (error) {
             throw new HttpException(error.message ?? "Failed to fetch data", error.status ?? 500)
@@ -285,7 +282,6 @@ export class TransactionsService {
             return {
                 total: debit_data[0]?.total ? debit_data[0].total : 0,
                 message: "Fetched All Month Overall Transactions",
-                status: HttpStatus.OK
             }
         } catch (error) {
             throw new HttpException(error.message ?? "Failed to fetch data", error.status ?? 500)
@@ -293,40 +289,20 @@ export class TransactionsService {
     }
 
     /**
-     * The function `getMonthCategoryWiseDebits` retrieves aggregated debit data for a specific user
-     * within a given time range, grouped by category.
-     * @param {any} body - The `body` parameter is an object that contains the following properties:
+     * The function `getMonthCategoryWiseDebits` fetches all month overall category-wise debits from
+     * the userDebitsModel using aggregation.
+     * @param {any} body - The `body` parameter is an object that contains the necessary information
+     * for the aggregation query. It is used to specify the filters and conditions for the query.
      * @returns an object with the following properties:
-     * - data: an object containing the aggregated data grouped by category_id
-     * - message: a string message indicating the success of the operation
-     * - status: an HTTP status code indicating the success of the operation (HttpStatus.OK)
+     * - `data`: It contains the fetched data, where each category is a key and the corresponding value
+     * is an object containing the category-wise debits.
+     * - `message`: A string message indicating that all month overall category-wise debits have been
+     * fetched.
+     * - `status`: The HTTP status code, which is set to `HttpStatus.OK` (200
      */
     async getMonthCategoryWiseDebits(body: any) {
         try {
-            let query_data = await this.userDebitsModel.aggregate([
-                {
-                    $match: {
-                        "user_id": body.user_id,
-                        "created_at": { $gt: moment.utc(body.start_time).toDate(), $lte: moment.utc(body.end_time).toDate() }
-                    },
-                },
-                {
-                    $set: {
-                        total: 0
-                    }
-                },
-                {
-                    $group: {
-                        _id: "$category_id",
-                        count: { $sum: 1 },
-                        total: { $sum: "$value" },
-                        max: { "$max": "$value" },
-                        min: { "$min": "$value" },
-                        avg: { "$avg": "$value" }
-                    }
-                },
-
-            ])
+            let query_data = await this.userDebitsModel.aggregate(this.categoryWiseAggregation(body))
             let data = {}
             for (let item of query_data) {
                 data[item._id] = item
@@ -334,7 +310,6 @@ export class TransactionsService {
             return {
                 data,
                 message: "Fetched All Month Overall Category Wise Debits",
-                status: HttpStatus.OK
             }
         } catch (error) {
             throw new HttpException(error.message ?? "Failed to fetch data", error.status ?? 500)
@@ -342,28 +317,114 @@ export class TransactionsService {
     }
 
     /**
-     * The function `getSingleCategoryMonthData` fetches data for a single category for a specific
-     * month and returns aggregated information about the transactions.
+     * The function `getMonthCategoryWiseOverallData` retrieves category-wise data for debits, credits,
+     * and estimations for a given month.
      * @param {any} body - The `body` parameter is an object that contains the necessary information
-     * for fetching the single category month data. It may include properties such as the category
-     * name, month, and any other relevant filters or options needed for the query.
+     * for fetching the month category-wise overall data. It may include properties such as the month,
+     * year, user ID, or any other relevant information required for the aggregation query.
      * @returns an object with the following properties:
-     * - data: The result of the aggregation query performed on the userDebitsModel.
-     * - total: The total value from the data array, or 0 if it is undefined.
-     * - min: The minimum value from the data array, or 0 if it is undefined.
-     * - max: The value of the max property from the first element of
+     * - `data`: an object containing the fetched debit, credit, and estimation data categorized by
+     * month.
+     * - `message`: a string indicating the success message.
+     * - `status`: an HTTP status code indicating the success status.
+     */
+    async getMonthCategoryWiseOverallData(body: any) {
+        try {
+            const [debit_data, credit_data, estimation_data] = await Promise.all([
+                this.userDebitsModel.aggregate(this.categoryWiseAggregation(body)),
+                this.userCreditsModel.aggregate(this.categoryWiseAggregation(body)),
+                this.userEstimationModel.aggregate(this.categoryWiseAggregation(body))
+            ])
+            let data = {
+                debits: {},
+                credits: {},
+                estimations: {}
+            }
+            for (let item of debit_data) {
+                data.debits[item._id] = item
+            }
+            for (let item of credit_data) {
+                data.credits[item._id] = item
+            }
+            for (let item of estimation_data) {
+                data.estimations[item._id] = item
+            }
+            return {
+                data,
+                message: "Fetched All Month Overall Category Wise Debits",
+            }
+        } catch (error) {
+            throw new HttpException(error.message ?? "Failed to fetch data", error.status ?? 500)
+        }
+    }
+
+    /**
+     * The function performs category-wise aggregation on a given dataset based on user ID, start time,
+     * and end time.
+     * @param {any} body - The `body` parameter is an object that contains the following properties:
+     * @returns an array of aggregation stages for MongoDB.
+     */
+    categoryWiseAggregation(body: any) {
+        return [
+            {
+                $match: {
+                    "user_id": body.user_id,
+                    "created_at": { $gt: moment.utc(body.start_time).toDate(), $lte: moment.utc(body.end_time).toDate() }
+                },
+            },
+            {
+                $set: {
+                    total: 0
+                }
+            },
+            {
+                $group: {
+                    _id: "$category_id",
+                    count: { $sum: 1 },
+                    total: { $sum: "$value" },
+                    max: { "$max": "$value" },
+                    min: { "$min": "$value" },
+                    avg: { "$avg": "$value" }
+                }
+            },
+
+        ]
+    }
+
+    /**
+     * The function `getSingleCategoryMonthData` retrieves data for a specific category in a given
+     * month, including total, minimum, maximum, and average values.
+     * @param {any} body - The `body` parameter is an object that contains the request body data. It is
+     * used to determine the type of data to fetch (spends, estimations, or income) and to provide
+     * additional filters or criteria for the data aggregation.
+     * @returns an object with the following properties:
+     * - data: an array of aggregated transaction data
+     * - total: the total value of the transactions (defaulting to 0 if not present)
+     * - min: the minimum value of the transactions (defaulting to 0 if not present)
+     * - max: the maximum value of the transactions (defaulting to 0 if not present)
+     * - avg
      */
     async getSingleCategoryMonthData(body: any) {
         try {
-            let data = await this.userDebitsModel.aggregate(this.createOverallTransactionsDataAggregation(body))
+            let type = "spends";
+            if (body.type) {
+                type = body.type
+            }
+            let data = [];
+            if (type === "spends") {
+                data = await this.userDebitsModel.aggregate(this.createOverallTransactionsDataAggregation(body))
+            } else if (type === "estimations") {
+                data = await this.userEstimationModel.aggregate(this.createOverallTransactionsDataAggregation(body))
+            } else if (type === "income") {
+                data = await this.userCreditsModel.aggregate(this.createOverallTransactionsDataAggregation(body))
+            }
             return {
                 data,
                 total: data[0]?.total ?? 0,
                 min: data[0]?.min ?? 0,
                 max: data[0]?.max?.value ?? 0,
                 avg: data[0]?.avg ?? 0,
-                message: "Fetched All Month Category Debits",
-                status: HttpStatus.OK
+                message: "Fetched Month All Category Details",
             }
         } catch (error) {
             throw new HttpException(error.message ?? "Failed to fetch data", error.status ?? 500)
