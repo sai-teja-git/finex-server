@@ -14,6 +14,7 @@ import { CategoryModule } from './category/category.module';
 import { UserCategoryModule } from './user-category/user-category.module';
 import { env } from 'process';
 import { TransactionsModule } from './transactions/transactions.module';
+import { SplitBillModule } from './split-bill/split-bill.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     CategoryModule,
     UserCategoryModule,
     TransactionsModule,
+    SplitBillModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailService],
