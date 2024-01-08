@@ -89,6 +89,26 @@ export class SplitBillService {
   }
 
   /**
+   * The function updates a group with the given ID using the provided data.
+   * @param {string} id - The `id` parameter is a string that represents the unique identifier of the
+   * group that needs to be updated. It is used to find the specific group in the database.
+   * @param {any} body - The `body` parameter is an object that contains the updated data for the
+   * group. It can include any properties that need to be updated for the group.
+   * @returns an object with a "message" property set to "Group Updated".
+   */
+  async updateGroup(id: string, body: any) {
+    try {
+      await this.spbGroupModel.updateOne({ _id: id }, body)
+      return {
+        message: "Group Updated",
+      }
+    } catch (error) {
+      let err_message = error.message ?? "Update Failed"
+      throw new HttpException(err_message, error.status ?? 500)
+    }
+  }
+
+  /**
    * The function deletes a group and all associated bills from a database.
    * @param {string} group_id - The `group_id` parameter is a string that represents the unique
    * identifier of a group. It is used to identify the group that needs to be deleted.
@@ -106,6 +126,13 @@ export class SplitBillService {
     }
   }
 
+  /**
+   * The function `addBill` creates a new bill by inserting the provided data into the database and
+   * returns a success message.
+   * @param {any} body - The `body` parameter is an object that contains the data for creating a bill.
+   * It is passed to the `addBill` function as an argument.
+   * @returns an object with a "message" property set to "Bill Created".
+   */
   async addBill(body: any) {
     try {
       await this.spbBillModel.insertMany(body)
@@ -118,21 +145,43 @@ export class SplitBillService {
     }
   }
 
+  /**
+   * The function `getGroupOverallValues` retrieves overall data and bill data for a specific group.
+   * @param {string} group_id - The `group_id` parameter is a string that represents the unique
+   * identifier of a group. It is used to query and retrieve data related to that specific group.
+   * @returns an object with two properties: "data" and "message". The "data" property contains the
+   * estimation value from the overall_data array and the total and data properties from the bill_data
+   * array. The "message" property contains the string "fetched group overall data".
+   */
   async getGroupOverallValues(group_id: string) {
     try {
-      const bill_sum = this.spbBillModel.aggregate([
-        {
-          $match: {
-            group_id
+      const [overall_data, bill_data] = await Promise.all([
+        this.spbGroupModel.find({ _id: group_id }, { estimation: 1 }),
+        this.spbBillModel.aggregate([
+          {
+            $match: {
+              group_id
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$value" },
+              data: {
+                $push: "$$ROOT"
+              }
+            }
+          },
+          {
+            $unset: ["_id"]
           }
-        },
-        {
-          $addFields: {
-            total: { $sum: "$group_bills.value" }
-          }
-        },
+        ])
       ])
       return {
+        data: {
+          estimation: overall_data[0]?.estimation,
+          ...bill_data[0]
+        },
         message: "fetched group overall data",
       }
     } catch (error) {
