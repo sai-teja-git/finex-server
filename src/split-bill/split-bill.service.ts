@@ -119,7 +119,7 @@ export class SplitBillService {
       await this.spbBillModel.deleteMany({ group_id });
       await this.spbGroupModel.deleteOne({ _id: group_id })
       return {
-        message: "Bill Deleted",
+        message: "Bill Group Deleted",
       }
     } catch (error) {
       throw new HttpException(error.message ?? "Deletion Failed", error.status ?? 500)
@@ -183,6 +183,66 @@ export class SplitBillService {
           ...bill_data[0]
         },
         message: "fetched group overall data",
+      }
+    } catch (error) {
+      throw new HttpException(error.message ?? "Failed to fetch", error.status ?? 500)
+    }
+  }
+
+  /**
+   * The function updates a bill with the given ID using the provided data.
+   * @param {string} id - The `id` parameter is a string that represents the unique identifier of the
+   * bill that needs to be updated. It is used to locate the specific bill in the database.
+   * @param {any} body - The `body` parameter is an object that contains the updated data for the bill.
+   * It can include any properties that need to be updated, such as the bill amount, due date, or any
+   * other relevant information.
+   * @returns an object with a "message" property set to "Bill Updated".
+   */
+  async updateBill(id: string, body: any) {
+    try {
+      await this.spbBillModel.updateOne({ _id: id }, body)
+      return {
+        message: "Bill Updated",
+      }
+    } catch (error) {
+      let err_message = error.message ?? "Update Failed"
+      throw new HttpException(err_message, error.status ?? 500)
+    }
+  }
+
+  /**
+   * The function deletes a bill with the specified ID and returns a success message or throws an error
+   * if the deletion fails.
+   * @param {string} bill_id - The `bill_id` parameter is a string that represents the unique
+   * identifier of the bill that needs to be deleted.
+   * @returns an object with a "message" property set to "Bill Deleted".
+   */
+  async deleteBill(bill_id: string) {
+    try {
+      await this.spbBillModel.deleteOne({ _id: bill_id });
+      return {
+        message: "Bill Deleted",
+      }
+    } catch (error) {
+      throw new HttpException(error.message ?? "Deletion Failed", error.status ?? 500)
+    }
+  }
+
+  async getPersonWiseBillDetails(group_id: string) {
+    try {
+      let data = await this.spbBillModel.aggregate([
+        {
+          $match: { group_id }
+        },
+        // {
+        //   $group: {
+        //     _id:
+        //   }
+        // }
+      ])
+      return {
+        data,
+        message: "Fetched User Bills",
       }
     } catch (error) {
       throw new HttpException(error.message ?? "Failed to fetch", error.status ?? 500)

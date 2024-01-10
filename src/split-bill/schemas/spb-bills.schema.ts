@@ -6,6 +6,8 @@ class SpbPersonBillModel {
     person_id: string;
     @Prop({ type: Number })
     value: number;
+    @Prop({ type: Boolean })
+    edited: boolean;
 }
 const SpbPersonBillSchema = SchemaFactory.createForClass(SpbPersonBillModel)
 

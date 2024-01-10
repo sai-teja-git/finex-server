@@ -4,6 +4,8 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 class SpbGroupPersonsModel {
     @Prop({ type: String, required: true })
     name: string;
+    @Prop({ type: Number, default: 0 })
+    paid: number
 }
 const SpbGroupPersonsSchema = SchemaFactory.createForClass(SpbGroupPersonsModel)
 
