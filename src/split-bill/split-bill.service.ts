@@ -230,16 +230,37 @@ export class SplitBillService {
 
   async getPersonWiseBillDetails(group_id: string) {
     try {
-      let data = await this.spbBillModel.aggregate([
-        {
-          $match: { group_id }
-        },
-        // {
-        //   $group: {
-        //     _id:
-        //   }
-        // }
+      const [bill_group, bills_data] = await Promise.all([
+        this.spbGroupModel.findOne({ _id: group_id }),
+        this.spbBillModel.aggregate([
+          {
+            $match: { group_id }
+          },
+          {
+            $unwind: "$persons"
+          },
+          {
+            $group: {
+              _id: "$persons.person_id",
+              total: { $sum: "$persons.value" },
+              bills: {
+                $push: "$$ROOT"
+              }
+            }
+          }
+        ])
       ])
+      let data = {}
+      for (let person of bills_data) {
+        data[person._id] = person
+      }
+      try {
+        for (let person of bill_group.persons) {
+          if (person["_id"] in data) {
+            data[person["_id"]]["paid"] = person.paid ? person.paid : 0;
+          }
+        }
+      } catch { }
       return {
         data,
         message: "Fetched User Bills",
