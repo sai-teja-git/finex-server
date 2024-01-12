@@ -109,6 +109,79 @@ export class SplitBillService {
   }
 
   /**
+   * The function `addPersonToGroup` adds a person or multiple persons to a group identified by its ID.
+   * @param {string} id - The `id` parameter is a string that represents the identifier of the group to
+   * which the person will be added. It is used to find the group in the database.
+   * @param {any} body - The `body` parameter is an object that contains the data of the person to be
+   * added to the group. It can include properties such as name, age, address, etc.
+   * @returns an object with two properties: "data" and "message". The "data" property contains the
+   * updated document after adding the person to the group, and the "message" property is a string
+   * indicating that the person has been added.
+   */
+  async addPersonToGroup(id: string, body: any) {
+    try {
+      const data = await this.spbGroupModel.findOneAndUpdate(
+        { _id: id },
+        {
+          $push: {
+            persons: {
+              $each: body
+            }
+          }
+        },
+        { returnDocument: "after" }
+      )
+      return {
+        data,
+        message: "Person Added",
+      }
+    } catch (error) {
+      let err_message = error.message ?? "Update Failed"
+      throw new HttpException(err_message, error.status ?? 500)
+    }
+  }
+
+  /**
+   * The function updates the details of a person in a group, including incrementing a "paid" field if
+   * provided.
+   * @param {any} body - The `body` parameter is an object that contains the following properties:
+   * @returns an object with two properties: "data" and "message". The "data" property contains the
+   * updated person details, and the "message" property contains the message "Person Details Updated".
+   */
+  async updatePersonDetails(body: any) {
+    try {
+      let set_body = {};
+      let inc_body = {};
+      for (let key in body.data) {
+        if (key === "paid") {
+          inc_body["persons.$." + key] = body.data[key]
+        } else {
+          set_body["persons.$." + key] = body.data[key]
+        }
+      }
+      const data = await this.spbGroupModel.findOneAndUpdate(
+        { _id: body.group_id, "persons._id": body.person_id },
+        {
+          ...(Object.keys(set_body).length && {
+            $set: set_body
+          }),
+          ...(Object.keys(inc_body).length && {
+            $inc: inc_body
+          })
+        },
+        { returnDocument: "after" }
+      )
+      return {
+        data,
+        message: "Person Details Updated",
+      }
+    } catch (error) {
+      let err_message = error.message ?? "Update Failed"
+      throw new HttpException(err_message, error.status ?? 500)
+    }
+  }
+
+  /**
    * The function deletes a group and all associated bills from a database.
    * @param {string} group_id - The `group_id` parameter is a string that represents the unique
    * identifier of a group. It is used to identify the group that needs to be deleted.
@@ -228,6 +301,15 @@ export class SplitBillService {
     }
   }
 
+  /**
+   * The function `getPersonWiseBillDetails` retrieves bill details for each person in a specified
+   * group.
+   * @param {string} group_id - The `group_id` parameter is a string that represents the unique
+   * identifier of a group. It is used to fetch the bill details for each person in the group.
+   * @returns an object with two properties: "data" and "message". The "data" property contains the
+   * bill details grouped by person, with each person's ID as the key. The "message" property contains
+   * a string message indicating that the user bills have been fetched.
+   */
   async getPersonWiseBillDetails(group_id: string) {
     try {
       const [bill_group, bills_data] = await Promise.all([

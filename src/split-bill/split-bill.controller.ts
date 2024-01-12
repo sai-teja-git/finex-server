@@ -10,19 +10,29 @@ export class SplitBillController {
     return this.splitBillService.addBill(body)
   }
 
-  @Delete("bill/:id")
-  deleteBill(@Param() object) {
-    return this.splitBillService.deleteBill(object.id)
-  }
-
-  @Patch("bill/:id")
-  updateBill(@Param() object, @Body() body) {
-    return this.splitBillService.updateBill(object.id, body)
+  @Post("group/person/:id")
+  addNewPerson(@Param() object, @Body() body) {
+    return this.splitBillService.addPersonToGroup(object.id, body)
   }
 
   @Post()
   insertNewGroup(@Body() body) {
     return this.splitBillService.insertNewGroup(body)
+  }
+
+  @Delete("bill/:id")
+  deleteBill(@Param() object) {
+    return this.splitBillService.deleteBill(object.id)
+  }
+
+  @Patch("person-details")
+  updatePersonDetails(@Body() body) {
+    return this.splitBillService.updatePersonDetails(body)
+  }
+
+  @Patch("bill/:id")
+  updateBill(@Param() object, @Body() body) {
+    return this.splitBillService.updateBill(object.id, body)
   }
 
   @Patch("/:id")
