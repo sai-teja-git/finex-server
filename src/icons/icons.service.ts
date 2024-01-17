@@ -50,7 +50,7 @@ export class IconsService {
     try {
       await this.iconModel.insertMany(body.data)
       return {
-        message: "Icon types created Created",
+        message: "Icon types Created",
         status: HttpStatus.CREATED
       }
     } catch (error) {
