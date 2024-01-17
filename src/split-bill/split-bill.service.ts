@@ -352,4 +352,72 @@ export class SplitBillService {
     }
   }
 
+  /**
+   * The `deletePerson` function deletes a person from a group and updates the associated bills
+   * accordingly.
+   * @param {any} body - The `body` parameter is an object that contains the following properties:
+   * @returns an object with a "message" property set to "Bill Deleted".
+   */
+  async deletePerson(body: any) {
+    try {
+      const bills_data = await this.spbBillModel.find(
+        {
+          $and: [
+            { group_id: body.group_id },
+            { persons: { $elemMatch: { person_id: body.person_id } } }
+          ]
+        },
+      );
+      let data_to_update = [], data_to_delete = [];
+      for (let bill of bills_data) {
+        if (bill.persons.length === 1) {
+          data_to_delete.push(bill._id)
+        } else {
+          const person_ind = bill.persons.findIndex(e => e.person_id === body.person_id);
+          if (person_ind !== -1) {
+            let value_to_add: number = bill.persons[person_ind].value;
+            bill.persons.splice(person_ind, 1)
+            const persons_length = bill.persons.length
+            for (let i = 0; i < persons_length; i++) {
+              let person = bill.persons[i]
+              const one_person_bill = Number((value_to_add / (persons_length - i)).toFixed(0));
+              person.value += one_person_bill > 0 ? one_person_bill : 0;
+              value_to_add -= one_person_bill
+            }
+            data_to_update.push({
+              updateOne: {
+                filter: {
+                  _id: bill._id
+                },
+                update: {
+                  persons: bill.persons
+                }
+              }
+            })
+          }
+        }
+      }
+
+      await Promise.all([
+        ...(data_to_update.length ? [
+          this.spbBillModel.bulkWrite(data_to_update)
+        ] : []),
+        ...(data_to_delete.length ? [
+          this.spbBillModel.deleteMany({ _id: { $in: data_to_delete } })
+        ] : [])
+      ])
+
+      await this.spbGroupModel.updateOne(
+        { _id: body.group_id },
+        { $pull: { "persons": { "_id": body.person_id } } }
+      )
+
+      return {
+        message: "Bill Deleted",
+      }
+    } catch (error) {
+      throw new HttpException(error.message ?? "Deletion Failed", error.status ?? 500)
+    }
+  }
+
 }

@@ -20,11 +20,6 @@ export class SplitBillController {
     return this.splitBillService.insertNewGroup(body)
   }
 
-  @Delete("bill/:id")
-  deleteBill(@Param() object) {
-    return this.splitBillService.deleteBill(object.id)
-  }
-
   @Patch("person-details")
   updatePersonDetails(@Body() body) {
     return this.splitBillService.updatePersonDetails(body)
@@ -53,6 +48,16 @@ export class SplitBillController {
   @Get()
   billGroups(@Query() params) {
     return this.splitBillService.getGroupData(params)
+  }
+
+  @Delete("bill/:id")
+  deleteBill(@Param() object) {
+    return this.splitBillService.deleteBill(object.id)
+  }
+
+  @Delete("person")
+  deletePerson(@Query() params) {
+    return this.splitBillService.deletePerson(params)
   }
 
   @Delete("/:id")
