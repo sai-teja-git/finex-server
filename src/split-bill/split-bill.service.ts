@@ -41,20 +41,22 @@ export class SplitBillService {
   }
 
   /**
-   * The function `getGroupData` retrieves aggregated data for a specific time range from a MongoDB
-   * collection and performs some calculations on the retrieved data.
-   * @param {any} params - The `params` object contains the following properties:
-   * @returns The function `getGroupData` returns an object with two properties: `data` and `message`.
-   * The `data` property contains the result of the aggregation query, which is an array of group data.
-   * The `message` property is a string indicating the status of the operation, in this case, "Fetched
-   * Month Data".
+   * The function `getGroupData` retrieves group data based on specified parameters and returns it
+   * along with a success message.
+   * @param {any} params - - start_time: The start time for filtering the data (in UTC format)
+   * @returns an object with two properties: "data" and "message". The "data" property contains the
+   * result of the aggregation query, while the "message" property is a string indicating the status of
+   * the operation ("Fetched Month Data" in this case).
    */
   async getGroupData(params: any) {
     try {
       let data = await this.spbGroupModel.aggregate([
         {
           $match: {
-            created_at: { $gt: moment.utc(params.start_time).toDate(), $lte: moment.utc(params.end_time).toDate() }
+            $and: [
+              { user_id: params.user_id },
+              { created_at: { $gt: moment.utc(params.start_time).toDate(), $lte: moment.utc(params.end_time).toDate() } }
+            ]
           },
         },
         {

@@ -13,6 +13,8 @@ const SpbGroupPersonsSchema = SchemaFactory.createForClass(SpbGroupPersonsModel)
 export class SpbGroupModel {
     @Prop({ type: String, required: true })
     title: string;
+    @Prop({ type: String, required: true })
+    user_id: string;
     @Prop({ type: Number, required: true })
     estimation: number;
     @Prop({ type: [SpbGroupPersonsSchema], default: [] })
