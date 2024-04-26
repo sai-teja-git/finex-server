@@ -9,6 +9,7 @@ import { CURRENCY_TABLE, CurrencySchema } from './schemas/currency.schema';
     MongooseModule.forFeature([{ name: CURRENCY_TABLE, schema: CurrencySchema }])
   ],
   controllers: [CurrencyController],
-  providers: [CurrencyService]
+  providers: [CurrencyService],
+  exports: [MongooseModule]
 })
 export class CurrencyModule { }

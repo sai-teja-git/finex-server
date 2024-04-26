@@ -9,6 +9,7 @@ import { TIME_ZONE_TABLE, TimeZoneSchema } from './schemas/time-zone.schema';
     MongooseModule.forFeature([{ name: TIME_ZONE_TABLE, schema: TimeZoneSchema }])
   ],
   controllers: [TimeZoneController],
-  providers: [TimeZoneService]
+  providers: [TimeZoneService],
+  exports: [MongooseModule]
 })
 export class TimeZoneModule { }

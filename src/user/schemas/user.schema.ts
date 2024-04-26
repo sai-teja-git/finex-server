@@ -8,7 +8,7 @@ export class UserModel {
     name: string;
     @Prop({ type: String, required: true })
     email: string;
-    @Prop({ type: String, required: true })
+    @Prop({ type: String, default: null })
     password: string;
     @Prop({ type: String, default: null })
     profile_image: string;

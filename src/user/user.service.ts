@@ -13,6 +13,8 @@ import { env } from 'process';
 import { USER_CREDITS_TABLE, UserCreditsModel } from 'src/transactions/schemas/user-credits.schema';
 import { USER_ESTIMATIONS_TABLE, UserEstimationsModel } from 'src/transactions/schemas/user-estimations.schema';
 import { USER_DEBITS_TABLE, UserDebitsModel } from 'src/transactions/schemas/user-debits.schema';
+import { TIME_ZONE_TABLE, TimeZoneModel } from 'src/time-zone/schemas/time-zone.schema';
+import { CURRENCY_TABLE, CurrencyModel } from 'src/currency/schemas/currency.schema';
 
 @Injectable()
 export class UserService {
@@ -36,27 +38,49 @@ export class UserService {
     @InjectModel(USER_ESTIMATIONS_TABLE)
     private userEstimationModel: Model<UserEstimationsModel>,
 
+    @InjectModel(TIME_ZONE_TABLE)
+    private timeZoneModel: Model<TimeZoneModel>,
+
+    @InjectModel(CURRENCY_TABLE)
+    private currencyModel: Model<CurrencyModel>,
+
     private readonly mailService: MailService,
     private readonly authService: AuthService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
   ) { }
 
   /**
-   * The function `signUpUser` is an asynchronous function that creates a new user, hashes their
-   * password, generates a verification token, sends a verification email, and returns a success
-   * message with the user ID.
-   * @param body - The `body` parameter is an object that contains the user data needed for signing up.
-   * It typically includes properties such as `name`, `email`, and `password`.
-   * @returns an object with the following properties:
-   * - user_id: The ID of the created user.
-   * - message: A message indicating that the user was created.
-   * - status: The HTTP status code indicating that the user was created (HttpStatus.CREATED).
+   * The signUpUser function creates a new user, assigns default time zone and currency, sends a
+   * verification email, and handles errors appropriately.
+   * @param body - The `signUpUser` function you provided is responsible for creating a new user in
+   * your system. It performs the following steps:
+   * @returns {
+   *   user_id: user_data._id,
+   *   message: "User Created",
+   *   status: HttpStatus.CREATED
+   * }
    */
   async signUpUser(body) {
     let user_data: any = null;
     try {
-      const saltOrRounds = 10;
-      body["password"] = await bcrypt.hash(body["password"], saltOrRounds);
+      const [timeZoneData, currencyData] = await Promise.all([
+        this.returnDefaultTimeZone(body.zone_offset),
+        this.currencyModel.findOne({ name: "Indian Rupee" })
+      ])
+      body = {
+        ...body,
+        time_zone_id: timeZoneData._id,
+        time_zone: timeZoneData.zone,
+        time_zone_gmt_time: timeZoneData.gmt_time,
+        time_zone_gmt_minutes: timeZoneData.gmt_minutes,
+        currency_id: currencyData._id,
+        currency_name: currencyData.name,
+        currency_name_plural: currencyData.name_plural,
+        currency_decimal_digits: currencyData.decimal_digits,
+        currency_code: currencyData.code,
+        currency_icon_class: currencyData.icon_class,
+        currency_html_code: currencyData.html_code,
+      }
       user_data = await this.userModel.create(body);
       const token = this.jwtService.sign({ user_id: user_data._id }, { expiresIn: "1d", secret: env.JWT_SECRET_KEY })
       const verification_link = `${env.UI_DOMAIN}/email-verification?code=${token}`;
@@ -74,6 +98,7 @@ export class UserService {
             "attachments": []
           }
         }
+
         await this.sendMail(mail_body)
       } catch (error) {
         await this.userModel.deleteOne({ _id: user_data._id });
@@ -94,6 +119,33 @@ export class UserService {
       }
       throw new HttpException(err_message, error.status ?? 500)
     }
+  }
+
+  /**
+   * This TypeScript function returns the default time zone data based on a given GMT offset in
+   * minutes.
+   * @param {number} zone_offset - The `zone_offset` parameter in the `returnDefaultTimeZone` function
+   * represents the offset in minutes from GMT (Greenwich Mean Time). This function is designed to
+   * retrieve timezone data based on the provided offset. If a timezone with the specified offset is
+   * found in the database, it will be returned. Otherwise
+   * @returns The `returnDefaultTimeZone` function returns a Promise that resolves with either the time
+   * zone data corresponding to the provided `zone_offset` if found in the database, or the default
+   * time zone data if no matching record is found.
+   */
+  private async returnDefaultTimeZone(zone_offset: number): Promise<any> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const timeZoneData = await this.timeZoneModel.find({ gmt_minutes: zone_offset })
+        if (timeZoneData.length) {
+          resolve(timeZoneData[0])
+        } else {
+          const defaultData = await this.timeZoneModel.findOne()
+          resolve(defaultData)
+        }
+      } catch (e) {
+        reject(e)
+      }
+    })
   }
 
   /**

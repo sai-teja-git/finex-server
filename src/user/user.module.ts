@@ -9,6 +9,8 @@ import { UserCategoryModule } from 'src/user-category/user-category.module';
 import { MailService } from 'src/common/services/mail/mail.service';
 import { JwtModule } from '@nestjs/jwt';
 import { TransactionsModule } from 'src/transactions/transactions.module';
+import { TimeZoneModule } from 'src/time-zone/time-zone.module';
+import { CurrencyModule } from 'src/currency/currency.module';
 
 @Module({
   imports: [
@@ -17,12 +19,14 @@ import { TransactionsModule } from 'src/transactions/transactions.module';
     JwtModule,
     forwardRef(() => CategoryModule),
     forwardRef(() => UserCategoryModule),
-    forwardRef(() => TransactionsModule)
+    forwardRef(() => TransactionsModule),
+    forwardRef(() => TimeZoneModule),
+    forwardRef(() => CurrencyModule),
   ],
   controllers: [UserController],
   providers: [
     UserService,
-    MailService
+    MailService,
   ]
 })
 export class UserModule { }
