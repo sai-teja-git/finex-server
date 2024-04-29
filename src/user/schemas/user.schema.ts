@@ -10,6 +10,8 @@ export class UserModel {
     email: string;
     @Prop({ type: String, default: null })
     password: string;
+    @Prop({ type: String, enum: ["dark", "light", "system"], default: "system" })
+    theme: string;
     @Prop({ type: String, default: null })
     profile_image: string;
     @Prop({ type: Date, default: null })

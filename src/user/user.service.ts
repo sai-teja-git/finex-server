@@ -19,6 +19,8 @@ import { CURRENCY_TABLE, CurrencyModel } from 'src/currency/schemas/currency.sch
 @Injectable()
 export class UserService {
 
+  saltOrRounds = 10;
+
   constructor(
     @InjectModel(USER_TABLE)
     private readonly userModel: Model<UserModel>,
@@ -83,7 +85,7 @@ export class UserService {
       }
       user_data = await this.userModel.create(body);
       const token = this.jwtService.sign({ user_id: user_data._id }, { expiresIn: "1d", secret: env.JWT_SECRET_KEY })
-      const verification_link = `${env.UI_DOMAIN}/email-verification?code=${token}`;
+      const verification_link = `${env.UI_DOMAIN}/email-verification?code=${token}&verification=email`;
       try {
         let mail_body = {
           to: [
@@ -175,17 +177,22 @@ export class UserService {
   }
 
   /**
-   * The `verifyUser` function is an asynchronous function that decodes and verifies a JWT token,
-   * updates the user's verification status, inserts user categories, and returns a success message if
-   * successful.
-   * @param {any} req_data - The `req_data` parameter is an object that contains the following
-   * properties:
-   * @returns an object with two properties: "message" and "status". The "message" property contains
-   * the string "User Verified", and the "status" property contains the value of the constant
-   * "HttpStatus.CREATED".
+   * The function `verifyUser` in TypeScript verifies a user's account using a JWT token and updates
+   * their status to verified while handling various error scenarios.
+   * @param {any} req_data - The `req_data` parameter in the `verifyUser` function seems to contain
+   * information required for verifying a user. It likely includes a code that needs to be decoded and
+   * verified, as well as a password for the user. The function performs various tasks such as decoding
+   * the code, verifying it, updating
+   * @returns {
+   *   message: "User Verified",
+   *   status: HttpStatus.CREATED,
+   * }
    */
   async verifyUser(req_data: any) {
     try {
+      if (req_data.verification !== "email") {
+        throw new Error("Invalid Link")
+      }
       let user_req_data: any = this.jwtService.decode(req_data.code)
       try {
         await this.jwtService.verifyAsync(
@@ -207,9 +214,11 @@ export class UserService {
       if (user_data.verified) {
         throw new Error("User Already Verified")
       }
+      let password = await bcrypt.hash(req_data["password"], this.saltOrRounds);
       try {
         await this.userModel.updateOne({ _id: user_req_data.user_id }, {
-          verified: true
+          verified: true,
+          password
         })
       } catch {
         throw new Error("Invalid Link")
@@ -332,8 +341,7 @@ export class UserService {
       if (!(await bcrypt.compare(data["old_password"], user_data["password"]))) {
         throw new HttpException("Invalid Old Password", HttpStatus.FORBIDDEN)
       }
-      const saltOrRounds = 10;
-      let new_password = await bcrypt.hash(data["new_password"], saltOrRounds);
+      let new_password = await bcrypt.hash(data["new_password"], this.saltOrRounds);
       await this.userModel.updateOne({ _id: id }, {
         password: new_password
       })
@@ -347,17 +355,17 @@ export class UserService {
   }
 
   /**
-   * It takes the user name and password from the request body, checks if the user exists in the
-   * database, if it does, it checks if the password is correct, if it is, it updates the last login
-   * time and returns a token and user data
-   * @param body - The request body.
-   * @returns {
-   *     message: "Success",
-   *     status: HttpStatus.OK,
-   *     data: {
-   *       token: await this.authService.generateToken(
-   *         { username: body["user_name"] + user_data["_id"] },
-   *         Number(process.env.USER_TOKEN_EXPIRY_IN_SEC
+   * The `login` function in TypeScript handles user authentication by verifying credentials,
+   * generating a token, and returning user data if successful.
+   * @param body - The `login` function you provided is an asynchronous function that handles user
+   * authentication. It takes a `body` parameter, which typically contains user input data such as
+   * username and password for authentication.
+   * @returns The `login` function is returning an object with the following properties:
+   * - `message`: A string indicating the result of the login attempt, in this case "Success".
+   * - `status`: The HTTP status code, in this case HttpStatus.OK.
+   * - `data`: An object containing user data including:
+   *   - `token`: A generated token for authentication.
+   *   - `name`: User's name.
    */
   async login(body) {
     try {
@@ -387,13 +395,13 @@ export class UserService {
           id: user_data["_id"],
           last_login: user_data["last_login"],
           currency_id: user_data["currency_id"],
-          currency_icon: user_data["currency_icon_class"],
-          currency_code: user_data["currency_html_code"],
+          currency_code: user_data["currency_code"],
           currency_name: user_data["currency_name"],
           currency_name_plural: user_data["currency_name_plural"],
           currency_decimal_digits: user_data["currency_decimal_digits"],
           time_zone: user_data["time_zone"],
           time_zone_id: user_data["time_zone_id"],
+          theme: user_data["theme"]
         }
       }
     } catch (error) {
@@ -402,12 +410,14 @@ export class UserService {
   }
 
   /**
-   * The function `sendForgetPasswordLink` sends a forget password link to the user's email address if
-   * the provided username and email match the database records.
-   * @param {any} body - The `body` parameter is an object that contains the following properties:
-   * @returns an object with two properties: "message" and "status". The "message" property contains
-   * the string "Reset link sent" and the "status" property contains the value of the
-   * HttpStatus.CREATED constant.
+   * This function sends a forget password link to a user's email after verifying their username and
+   * email.
+   * @param {any} body - The `body` parameter in the `sendForgetPasswordLink` function likely contains
+   * information related to the user requesting a password reset. This information may include the
+   * user's username, email address, and possibly other relevant data needed to process the password
+   * reset request.
+   * @returns The `sendForgetPasswordLink` function is returning an object with a message "Reset link
+   * sent" and a status of HttpStatus.CREATED.
    */
   async sendForgetPasswordLink(body: any) {
     try {
@@ -421,7 +431,7 @@ export class UserService {
         throw new Error("Mail is not linked with this username")
       }
       const token = this.jwtService.sign({ user_id: user_data._id }, { expiresIn: "5m", secret: env.JWT_SECRET_KEY })
-      const password_link = `${env.UI_DOMAIN}/reset-password?code=${token}`;
+      const password_link = `${env.UI_DOMAIN}/reset-password?code=${token}&verification=password`;
       let mail_body = {
         to: [
           body.email,
@@ -457,6 +467,9 @@ export class UserService {
    */
   async resetUserPassword(body: any) {
     try {
+      if (body.verification !== "password") {
+        throw new Error("Invalid Link")
+      }
       let user_req_data: any = this.jwtService.decode(body.code)
       try {
         await this.jwtService.verifyAsync(
@@ -478,8 +491,7 @@ export class UserService {
       if (!user_data.verified) {
         throw new Error("User Not Verified")
       }
-      const saltOrRounds = 10;
-      let new_password = await bcrypt.hash(body["password"], saltOrRounds);
+      let new_password = await bcrypt.hash(body["password"], this.saltOrRounds);
       if (user_data.password === new_password) {
         throw new Error("New Password can't be old one, try another")
       }

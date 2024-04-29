@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, LoginDto } from './dto/create-user.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('user')
 export class UserController {
@@ -43,7 +44,8 @@ export class UserController {
     return this.userService.resetUserPassword(body)
   }
 
-  @Patch("/:user_id")
+  @Patch()
+  @UseGuards(AuthGuard)
   updateUserDetails(@Param() object, @Body() body) {
     return this.userService.updateUserDetails(object.user_id, body)
   }

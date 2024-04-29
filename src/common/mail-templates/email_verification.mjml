@@ -14,7 +14,7 @@
         <mj-column padding-bottom="30px">
           <mj-image mj-class="logo" src="https://finexs.vercel.app/assets/images/logos/finex-logo.png" alt="Company Logo" width="100px" padding-bottom="15px" />
           <mj-text mj-class="fontFamily" font-size="20px" font-weight="800" padding="5px" color="#fff">Verify your email</mj-text>
-          <mj-text mj-class="fontFamily" font-size="14px" color="#b3b3b3" padding="5px">Hi {{name}}! click button below to verify your email address.</mj-text>
+          <mj-text mj-class="fontFamily" font-size="14px" color="#b3b3b3" padding="5px">Hi {{name}}! click button below to verify your email address and create your password.</mj-text>
           <mj-button mj-class="fontFamily" href="{{ verify_link }}" background-color="#f16f25" align="center" padding="15px">Verify</mj-button>
           <mj-text mj-class="fontFamily" font-size="14px" color="#b3b3b3" padding="5px">If you are having trouble clicking the "Verify" button click on below URL or copy paste in browser. </mj-text>
           <mj-text mj-class="fontFamily" font-size="14px" color="#b3b3b3" padding="5px"> {{verify_link}}</mj-text>
