@@ -1,26 +1,29 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { MongooseModule } from '@nestjs/mongoose';
+import { env } from 'process';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
-import { UserModule } from './user/user.module';
-import { ConfigModule } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
-import { TimeZoneModule } from './time-zone/time-zone.module';
-import { CurrencyModule } from './currency/currency.module';
-import { MailService } from './common/services/mail/mail.service';
-import { IconsModule } from './icons/icons.module';
-import { ColorsModule } from './colors/colors.module';
 import { CategoryModule } from './category/category.module';
-import { UserCategoryModule } from './user-category/user-category.module';
-import { env } from 'process';
-import { TransactionsModule } from './transactions/transactions.module';
+import { ColorsModule } from './colors/colors.module';
+import { CurrencyModule } from './currency/currency.module';
+import { IconsModule } from './icons/icons.module';
 import { SplitBillModule } from './split-bill/split-bill.module';
+import { TimeZoneModule } from './time-zone/time-zone.module';
+import { TransactionsModule } from './transactions/transactions.module';
+import { UserCategoryModule } from './user-category/user-category.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
-    AuthModule,
     ConfigModule.forRoot({
       isGlobal: true
+    }),
+    JwtModule.register({
+      global: true,
+      secret: env.JWT_SECRET_KEY,
+      signOptions: { expiresIn: env.JWT_TOKEN_LIFE }
     }),
     MongooseModule.forRootAsync({
       useFactory: () => ({
@@ -38,6 +41,7 @@ import { SplitBillModule } from './split-bill/split-bill.module';
     SplitBillModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MailService],
+  providers: [AppService],
+  exports: [],
 })
 export class AppModule { }

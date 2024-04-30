@@ -4,7 +4,7 @@ import * as nodemailerMjml from "nodemailer-mjml";
 import * as path from "path";
 
 @Injectable()
-export class MailService {
+export class NotificationService {
 
 
     /**
