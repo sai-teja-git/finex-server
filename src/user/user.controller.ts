@@ -33,9 +33,10 @@ export class UserController {
     return this.passwordService.sendForgetPassword(body)
   }
 
-  @Patch("password/:user_id")
-  changePassword(@Param() object, @Body() body) {
-    return this.passwordService.changePassword(object.user_id, body)
+  @Patch("password")
+  @UseGuards(AuthGuard)
+  changePassword(@Headers() headers, @Body() body) {
+    return this.passwordService.changePassword(headers, body)
   }
 
   @Patch("override-password")
@@ -45,7 +46,7 @@ export class UserController {
 
   @Patch()
   @UseGuards(AuthGuard)
-  updateUser(@Headers() headers, @Param() object, @Body() body) {
+  updateUser(@Headers() headers, @Body() body) {
     return this.userService.updateUser(headers, body)
   }
 

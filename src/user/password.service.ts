@@ -121,29 +121,16 @@ export class PasswordService {
         }
     }
 
-    /**
-     * This TypeScript function asynchronously changes a user's password after verifying the old
-     * password and updating it with a new hashed password.
-     * @param id - The `id` parameter in the `changePassword` function likely represents the unique
-     * identifier of the user whose password is being changed. This identifier is used to locate the
-     * user in the database and update their password. It is important for ensuring that the password
-     * change operation is performed on the correct user account.
-     * @param data - The `data` parameter in the `changePassword` function likely contains the
-     * following information related to changing a user's password:
-     * @returns {
-     *     message: "User Details Updated",
-     *     status: HttpStatus.OK
-     * }
-     */
-    async changePassword(id, data) {
+    async changePassword(headers, data) {
         const saltRounds = 10
         try {
-            let user_data = await this.userModel.findOne({ _id: id }).exec();
+            let user_data = await this.userModel.findOne({ _id: headers.user }).exec();
             if (!(await bcrypt.compare(data["old_password"], user_data["password"]))) {
                 throw new HttpException("Invalid Old Password", HttpStatus.FORBIDDEN)
             }
             let new_password = await bcrypt.hash(data["new_password"], saltRounds);
-            await this.userModel.updateOne({ _id: id }, {
+            if ((await bcrypt.compare(data["old_password"], new_password))) throw new HttpException("New Password Can't be old password, try another", HttpStatus.FORBIDDEN);
+            await this.userModel.updateOne({ _id: headers.user }, {
                 password: new_password
             })
             return {
