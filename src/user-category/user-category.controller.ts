@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards, Headers } from '@nestjs/common';
+import { AuthGuard } from 'src/user/guards/auth.guard';
 import { UserCategoryService } from './user-category.service';
 
 @Controller('user-category')
@@ -10,13 +11,14 @@ export class UserCategoryController {
     return this.userCategoryService.insertUserCategories(body)
   }
 
-  @Patch("/:id")
-  updateUserCategories(@Param() object, @Body() body) {
-    return this.userCategoryService.updateUserCatagories(object.id, body)
+  @Patch()
+  updateUserCategories(@Headers() headers, @Body() body) {
+    return this.userCategoryService.updateUserCatagories(headers.user, body)
   }
 
-  @Get("/:user_id")
-  getUserCategories(@Param() object) {
-    return this.userCategoryService.getUserCategories(object.user_id)
+  @Get()
+  @UseGuards(AuthGuard)
+  getUserCategories(@Headers() headers) {
+    return this.userCategoryService.getUserCategories(headers.user)
   }
 }
