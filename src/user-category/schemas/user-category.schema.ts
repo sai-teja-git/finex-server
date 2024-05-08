@@ -9,8 +9,6 @@ export class UserCategoryModel {
     @Prop({ type: String, required: true })
     name: string;
     @Prop({ type: String, required: true })
-    color: string;
-    @Prop({ type: String, required: true })
     icon: string;
     @Prop({ type: String, required: true })
     icon_id: string;

@@ -20,26 +20,14 @@ export class TransactionsService {
         private userEstimationModel: Model<UserEstimationsModel>
     ) { }
 
-    /**
-     * The function `insertTransaction` inserts a transaction into the appropriate model based on the
-     * given type, and returns a success message and status code.
-     * @param {string} type - The `type` parameter is a string that specifies the type of transaction
-     * to be inserted. It can have one of the following values: "credit", "debit", or "estimation".
-     * @param {any} data - The `data` parameter is an object that contains the information needed to
-     * create a transaction. The structure of the `data` object will depend on the type of transaction
-     * being created (credit, debit, or estimation).
-     * @returns an object with two properties: "message" and "status". The "message" property contains
-     * the string "Created" and the "status" property contains the value of the constant
-     * "HttpStatus.CREATED".
-     */
-    async insertTransaction(type: string, data: any) {
+    async insertTransaction(user_id: string, type: string, data: any) {
         try {
             if (type === "credit") {
-                await this.userCreditsModel.create(data)
+                await this.userCreditsModel.create({ ...data, user_id })
             } else if (type === "debit") {
-                await this.userDebitsModel.create(data)
+                await this.userDebitsModel.create({ ...data, user_id })
             } else if (type === "estimation") {
-                await this.userEstimationModel.create(data)
+                await this.userEstimationModel.create({ ...data, user_id })
             } else {
                 throw new Error("Invalid Type")
             }
@@ -115,20 +103,12 @@ export class TransactionsService {
         }
     }
 
-    /**
-     * The function retrieves overall spend, income, and estimation data between specified dates.
-     * @param {any} body - The `body` parameter is an object that contains the filters and criteria for
-     * fetching the overall spends between a certain period. It may include properties such as start
-     * date, end date, user ID, category, etc. These properties are used to create the aggregation
-     * pipeline for fetching the data from different models (`
-     * @returns an object with the following properties:
-     */
-    async getOverallSpendsBetween(body: any) {
+    async getOverallSpendsBetween(user_id: string, body: any) {
         try {
             const [debit_data, credit_data, estimation_data] = await Promise.all([
-                this.userDebitsModel.aggregate(this.createOverallTransactionsDataAggregation(body)),
-                this.userCreditsModel.aggregate(this.createOverallTransactionsDataAggregation(body)),
-                this.userEstimationModel.aggregate(this.createOverallTransactionsDataAggregation(body))
+                this.userDebitsModel.aggregate(this.createOverallTransactionsDataAggregation({ ...body, user_id })),
+                this.userCreditsModel.aggregate(this.createOverallTransactionsDataAggregation({ ...body, user_id })),
+                this.userEstimationModel.aggregate(this.createOverallTransactionsDataAggregation({ ...body, user_id }))
             ])
             return {
                 spend: {

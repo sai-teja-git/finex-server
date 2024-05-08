@@ -7,13 +7,15 @@ export class UserCategoryController {
   constructor(private readonly userCategoryService: UserCategoryService) { }
 
   @Post()
-  insertColors(@Body() body) {
-    return this.userCategoryService.insertUserCategories(body)
+  @UseGuards(AuthGuard)
+  insertColors(@Headers() headers, @Body() body) {
+    return this.userCategoryService.insertUserCategories(headers.user, body)
   }
 
-  @Patch()
-  updateUserCategories(@Headers() headers, @Body() body) {
-    return this.userCategoryService.updateUserCatagories(headers.user, body)
+  @Patch(":id")
+  @UseGuards(AuthGuard)
+  updateUserCategories(@Param() object, @Body() body) {
+    return this.userCategoryService.updateUserCatagories(object.id, body)
   }
 
   @Get()

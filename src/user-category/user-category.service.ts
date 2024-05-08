@@ -10,19 +10,9 @@ export class UserCategoryService {
     @InjectModel(USER_CATEGORY_TABLE) private userCategoryModel: Model<UserCategoryModel>
   ) { }
 
-  /**
-   * The function inserts user categories into a database and returns a success message.
-   * @param {any} body - The `body` parameter is an object that contains the data to be inserted into
-   * the user categories. It should have a property called `data` which is an array of objects
-   * representing the user categories to be created. Each object in the `data` array should have the
-   * necessary properties to define a user
-   * @returns an object with two properties: "message" and "status". The "message" property is set to
-   * "Categories Created" and the "status" property is set to the value of the "HttpStatus.CREATED"
-   * constant.
-   */
-  async insertUserCategories(body: any) {
+  async insertUserCategories(user_id: string, body: any) {
     try {
-      await this.userCategoryModel.create(body)
+      await this.userCategoryModel.create({ ...body, user_id })
       return {
         message: "Categories Created",
         status: HttpStatus.CREATED

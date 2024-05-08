@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Query, Delete } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { AuthGuard } from 'src/user/guards/auth.guard';
 import { TransactionsService } from './transactions.service';
 
 @Controller('transactions')
@@ -6,8 +7,9 @@ export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) { }
 
   @Post("/:type")
-  insertTransaction(@Param() object, @Body() body) {
-    return this.transactionsService.insertTransaction(object.type, body)
+  @UseGuards(AuthGuard)
+  insertTransaction(@Headers() headers, @Param() object, @Body() body) {
+    return this.transactionsService.insertTransaction(headers.user, object.type, body)
   }
 
   @Patch("/:type")
@@ -16,8 +18,9 @@ export class TransactionsController {
   }
 
   @Get("overall")
-  getMonthOverallData(@Query() body) {
-    return this.transactionsService.getOverallSpendsBetween(body)
+  @UseGuards(AuthGuard)
+  getMonthOverallData(@Headers() headers, @Query() body) {
+    return this.transactionsService.getOverallSpendsBetween(headers.user, body)
   }
 
   @Get("year-total")
