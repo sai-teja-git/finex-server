@@ -24,12 +24,6 @@ export class TransactionsController {
     return this.transactionsService.getOverallSpendsBetween(headers.user, body)
   }
 
-  @Get("overall-category-wise-debits")
-  @UseGuards(AuthGuard)
-  getMonthOverallCategoryWiseDebits(@Headers() headers, @Query() body) {
-    return this.transactionsService.getMonthCategoryWiseDebits(headers.user, body)
-  }
-
   @Get("overall-category-wise")
   @UseGuards(AuthGuard)
   getMonthOverallCategoryWiseData(@Headers() headers, @Query() body) {
@@ -38,8 +32,8 @@ export class TransactionsController {
 
   @Get("category-month")
   @UseGuards(AuthGuard)
-  getSingleCategoryMonthData(@Query() body) {
-    return this.transactionsService.getSingleCategoryMonthData(body)
+  getSingleCategoryMonthData(@Headers() headers, @Query() body) {
+    return this.transactionsService.getSingleCategoryMonthData(headers.user, body)
   }
 
   @Delete()
