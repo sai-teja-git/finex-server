@@ -148,22 +148,22 @@ export class TransactionsService {
                 spend: {
                     day_wise: debit_data,
                     total: debit_data[0]?.total ?? 0,
-                    min: debit_data[0]?.min ?? 0,
-                    max: debit_data[0]?.max ?? 0,
+                    min: debit_data[0]?.min ?? {},
+                    max: debit_data[0]?.max ?? {},
                     avg: debit_data[0]?.avg ?? 0,
                 },
                 income: {
                     day_wise: credit_data,
                     total: credit_data[0]?.total ?? 0,
-                    min: credit_data[0]?.min ?? 0,
-                    max: credit_data[0]?.max ?? 0,
+                    min: credit_data[0]?.min ?? {},
+                    max: credit_data[0]?.max ?? {},
                     avg: credit_data[0]?.avg ?? 0,
                 },
                 estimation: {
                     day_wise: estimation_data,
                     total: estimation_data[0]?.total ?? 0,
-                    min: estimation_data[0]?.min ?? 0,
-                    max: estimation_data[0]?.max ?? 0,
+                    min: estimation_data[0]?.min ?? {},
+                    max: estimation_data[0]?.max ?? {},
                     avg: estimation_data[0]?.avg ?? 0,
                 },
                 message: "Fetched All Month Overall Transactions",
@@ -199,7 +199,7 @@ export class TransactionsService {
                     },
                     total: { $sum: "$value" },
                     max: { "$max": { value: "$value", category_id: "$category_id" } },
-                    min: { "$min": "$value" },
+                    min: { "$min": { value: "$value", category_id: "$category_id" } },
                     avg: { "$avg": "$value" }
                 }
             },
@@ -231,6 +231,12 @@ export class TransactionsService {
                     "max.percentage": {
                         "$multiply": [
                             { "$divide": ["$max.value", "$total"] },
+                            100
+                        ]
+                    },
+                    "min.percentage": {
+                        "$multiply": [
+                            { "$divide": ["$min.value", "$total"] },
                             100
                         ]
                     }
