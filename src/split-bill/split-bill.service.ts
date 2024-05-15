@@ -17,19 +17,9 @@ export class SplitBillService {
     private spbBillModel: Model<SpbBillModel>
   ) { }
 
-  /**
-   * The function inserts a new group into the database and returns a success message or throws an
-   * error if the creation fails.
-   * @param {any} body - The `body` parameter is an object that contains the data for creating a new
-   * group. It should have the necessary properties and values required by the `spbGroupModel.create`
-   * method to successfully create a new group.
-   * @returns an object with two properties: "data" and "message". The "data" property contains the
-   * result of creating a new group using the "spbGroupModel.create" method, and the "message" property
-   * is a string indicating that the group was successfully created.
-   */
-  async insertNewGroup(body: any) {
+  async insertNewGroup(user_id: string, body: any) {
     try {
-      let data = await this.spbGroupModel.create(body)
+      let data = await this.spbGroupModel.create({ ...body, user_id })
       return {
         data,
         message: "Group Created",
@@ -40,21 +30,13 @@ export class SplitBillService {
     }
   }
 
-  /**
-   * The function `getGroupData` retrieves group data based on specified parameters and returns it
-   * along with a success message.
-   * @param {any} params - - start_time: The start time for filtering the data (in UTC format)
-   * @returns an object with two properties: "data" and "message". The "data" property contains the
-   * result of the aggregation query, while the "message" property is a string indicating the status of
-   * the operation ("Fetched Month Data" in this case).
-   */
-  async getGroupData(params: any) {
+  async getGroupData(user: string, params: any) {
     try {
       let data = await this.spbGroupModel.aggregate([
         {
           $match: {
             $and: [
-              { user_id: params.user_id },
+              { user_id: user },
               { created_at: { $gt: moment.utc(params.start_time).toDate(), $lte: moment.utc(params.end_time).toDate() } }
             ]
           },
@@ -76,7 +58,8 @@ export class SplitBillService {
         },
         {
           $addFields: {
-            actual: { $sum: "$group_bills.value" }
+            actual: { $sum: "$group_bills.value" },
+            paid: { $sum: "$persons.paid" }
           }
         },
         { $unset: ["document_id", "group_bills"] }
