@@ -213,33 +213,26 @@ export class SplitBillService {
    */
   async getGroupOverallValues(group_id: string) {
     try {
-      const [overall_data, bill_data] = await Promise.all([
-        this.spbGroupModel.find({ _id: group_id }, { estimation: 1 }),
-        this.spbBillModel.aggregate([
-          {
-            $match: {
-              group_id
-            }
-          },
-          {
-            $group: {
-              _id: null,
-              total: { $sum: "$value" },
-              data: {
-                $push: "$$ROOT"
-              }
-            }
-          },
-          {
-            $unset: ["_id"]
+      const bill_data = await this.spbBillModel.aggregate([
+        {
+          $match: {
+            group_id
           }
-        ])
+        },
+        {
+          $group: {
+            _id: null,
+            data: {
+              $push: "$$ROOT"
+            }
+          }
+        },
+        {
+          $unset: ["_id"]
+        }
       ])
       return {
-        data: {
-          estimation: overall_data[0]?.estimation,
-          ...bill_data[0]
-        },
+        bills: bill_data[0]?.data ?? [],
         message: "fetched group overall data",
       }
     } catch (error) {
@@ -325,6 +318,7 @@ export class SplitBillService {
         for (let person of bill_group.persons) {
           if (person["_id"] in data) {
             data[person["_id"]]["paid"] = person.paid ? person.paid : 0;
+            data[person["_id"]]["paid_percentage"] = Math.min(((data[person["_id"]]["paid"] / data[person["_id"]]["total"]) * 100), 100)
           }
         }
       } catch { }
