@@ -342,8 +342,8 @@ export class SplitBillService {
       const bills_data = await this.spbBillModel.find(
         {
           $and: [
-            { group_id: body.group_id },
-            { persons: { $elemMatch: { person_id: body.person_id } } }
+            { group_id: body.group },
+            { persons: { $elemMatch: { person_id: body.person } } }
           ]
         },
       );
@@ -352,7 +352,7 @@ export class SplitBillService {
         if (bill.persons.length === 1) {
           data_to_delete.push(bill._id)
         } else {
-          const person_ind = bill.persons.findIndex(e => e.person_id === body.person_id);
+          const person_ind = bill.persons.findIndex(e => e.person_id === body.person);
           if (person_ind !== -1) {
             let value_to_add: number = bill.persons[person_ind].value;
             bill.persons.splice(person_ind, 1)
@@ -387,8 +387,8 @@ export class SplitBillService {
       ])
 
       await this.spbGroupModel.updateOne(
-        { _id: body.group_id },
-        { $pull: { "persons": { "_id": body.person_id } } }
+        { _id: body.group },
+        { $pull: { "persons": { "_id": body.person } } }
       )
 
       return {
