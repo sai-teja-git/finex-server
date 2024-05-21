@@ -11,18 +11,23 @@ export class UserCategoryService {
   ) { }
 
   /**
-   * The function inserts user categories into a database and returns a success message.
-   * @param {any} body - The `body` parameter is an object that contains the data to be inserted into
-   * the user categories. It should have a property called `data` which is an array of objects
-   * representing the user categories to be created. Each object in the `data` array should have the
-   * necessary properties to define a user
-   * @returns an object with two properties: "message" and "status". The "message" property is set to
-   * "Categories Created" and the "status" property is set to the value of the "HttpStatus.CREATED"
-   * constant.
+   * The function `insertUserCategories` inserts user categories into a database and handles duplicate
+   * category name errors.
+   * @param {string} user_id - The `user_id` parameter is a string that represents the unique
+   * identifier of a user for whom the categories are being created.
+   * @param {any} body - The `body` parameter in the `insertUserCategories` function represents the
+   * data that contains the categories to be inserted for a specific user. It could include information
+   * such as the category name, description, or any other relevant details needed for creating a
+   * category for the user.
+   * @returns The function `insertUserCategories` is returning an object with a message "Categories
+   * Created" and a status of HttpStatus.CREATED if the user categories are successfully created. If
+   * there is an error during the creation process, it will throw an HttpException with an error
+   * message based on the specific error encountered. If the error is due to a duplicate key (error
+   * code 11000), the error message will indicate
    */
-  async insertUserCategories(body: any) {
+  async insertUserCategories(user_id: string, body: any) {
     try {
-      await this.userCategoryModel.create(body)
+      await this.userCategoryModel.create({ ...body, user_id })
       return {
         message: "Categories Created",
         status: HttpStatus.CREATED

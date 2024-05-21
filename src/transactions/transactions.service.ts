@@ -21,25 +21,30 @@ export class TransactionsService {
     ) { }
 
     /**
-     * The function `insertTransaction` inserts a transaction into the appropriate model based on the
-     * given type, and returns a success message and status code.
-     * @param {string} type - The `type` parameter is a string that specifies the type of transaction
-     * to be inserted. It can have one of the following values: "credit", "debit", or "estimation".
-     * @param {any} data - The `data` parameter is an object that contains the information needed to
-     * create a transaction. The structure of the `data` object will depend on the type of transaction
-     * being created (credit, debit, or estimation).
-     * @returns an object with two properties: "message" and "status". The "message" property contains
-     * the string "Created" and the "status" property contains the value of the constant
-     * "HttpStatus.CREATED".
+     * The function `insertTransaction` asynchronously inserts transaction data based on the type
+     * (credit, debit, or estimation) for a specific user.
+     * @param {string} user_id - The `user_id` parameter is a string that represents the unique
+     * identifier of the user for whom the transaction is being inserted.
+     * @param {string} type - The `type` parameter in the `insertTransaction` function determines the
+     * type of transaction to be inserted. It can have one of the following values:
+     * @param {any} data - The `data` parameter in the `insertTransaction` function represents the
+     * information related to the transaction that you want to insert into the database. This data
+     * could include details such as the amount, description, date, or any other relevant information
+     * depending on the type of transaction (credit, debit, or estimation
+     * @returns The `insertTransaction` function returns an object with a `message` property set to
+     * "Created" and a `status` property set to `HttpStatus.CREATED` if the transaction is successfully
+     * inserted into the corresponding model based on the `type` provided. If an error occurs during
+     * the insertion process, it throws an `HttpException` with a message of "Creation Failed" and a
+     * status code of 500
      */
-    async insertTransaction(type: string, data: any) {
+    async insertTransaction(user_id: string, type: string, data: any) {
         try {
             if (type === "credit") {
-                await this.userCreditsModel.create(data)
+                await this.userCreditsModel.create({ ...data, user_id })
             } else if (type === "debit") {
-                await this.userDebitsModel.create(data)
+                await this.userDebitsModel.create({ ...data, user_id })
             } else if (type === "estimation") {
-                await this.userEstimationModel.create(data)
+                await this.userEstimationModel.create({ ...data, user_id })
             } else {
                 throw new Error("Invalid Type")
             }
@@ -116,40 +121,49 @@ export class TransactionsService {
     }
 
     /**
-     * The function retrieves overall spend, income, and estimation data between specified dates.
-     * @param {any} body - The `body` parameter is an object that contains the filters and criteria for
-     * fetching the overall spends between a certain period. It may include properties such as start
-     * date, end date, user ID, category, etc. These properties are used to create the aggregation
-     * pipeline for fetching the data from different models (`
-     * @returns an object with the following properties:
+     * This TypeScript function retrieves overall spend, income, and estimation data for a user within
+     * a specified time frame.
+     * @param {string} user_id - The `getOverallSpendsBetween` function you provided seems to be
+     * fetching overall spend, income, and estimation data between a specified range for a given user
+     * ID. It aggregates data from three different models (`userDebitsModel`, `userCreditsModel`,
+     * `userEstimationModel`) based on the
+     * @param {any} body - The `getOverallSpendsBetween` function is designed to retrieve overall
+     * spending, income, and estimation data for a specific user within a given time frame. The
+     * function aggregates data from three different models (`userDebitsModel`, `userCreditsModel`, and
+     * `userEstimationModel`) based on the
+     * @returns The `getOverallSpendsBetween` function returns an object containing information about
+     * the overall spends, income, and estimations between specified dates for a given user. The object
+     * includes day-wise data for spends, income, and estimations, as well as total, minimum, maximum,
+     * and average values for each category. Additionally, a message indicating that all month overall
+     * transactions have been fetched is included in the
      */
-    async getOverallSpendsBetween(body: any) {
+    async getOverallSpendsBetween(user_id: string, body: any) {
         try {
             const [debit_data, credit_data, estimation_data] = await Promise.all([
-                this.userDebitsModel.aggregate(this.createOverallTransactionsDataAggregation(body)),
-                this.userCreditsModel.aggregate(this.createOverallTransactionsDataAggregation(body)),
-                this.userEstimationModel.aggregate(this.createOverallTransactionsDataAggregation(body))
+                this.userDebitsModel.aggregate(this.createOverallTransactionsDataAggregation({ ...body, user_id })),
+                this.userCreditsModel.aggregate(this.createOverallTransactionsDataAggregation({ ...body, user_id })),
+                this.userEstimationModel.aggregate(this.createOverallTransactionsDataAggregation({ ...body, user_id }))
             ])
             return {
                 spend: {
                     day_wise: debit_data,
                     total: debit_data[0]?.total ?? 0,
-                    min: debit_data[0]?.min ?? 0,
-                    max: debit_data[0]?.max ?? 0,
+                    min: debit_data[0]?.min ?? {},
+                    max: debit_data[0]?.max ?? {},
                     avg: debit_data[0]?.avg ?? 0,
                 },
                 income: {
                     day_wise: credit_data,
                     total: credit_data[0]?.total ?? 0,
-                    min: credit_data[0]?.min ?? 0,
-                    max: credit_data[0]?.max ?? 0,
+                    min: credit_data[0]?.min ?? {},
+                    max: credit_data[0]?.max ?? {},
                     avg: credit_data[0]?.avg ?? 0,
                 },
                 estimation: {
                     day_wise: estimation_data,
                     total: estimation_data[0]?.total ?? 0,
-                    min: estimation_data[0]?.min ?? 0,
-                    max: estimation_data[0]?.max ?? 0,
+                    min: estimation_data[0]?.min ?? {},
+                    max: estimation_data[0]?.max ?? {},
                     avg: estimation_data[0]?.avg ?? 0,
                 },
                 message: "Fetched All Month Overall Transactions",
@@ -159,12 +173,6 @@ export class TransactionsService {
         }
     }
 
-    /**
-     * The function creates an aggregation pipeline in MongoDB to aggregate overall transaction data
-     * within a specified time range for a given user.
-     * @param {any} body - The `body` parameter is an object that contains the following properties:
-     * @returns an array of aggregation pipeline stages.
-     */
     private createOverallTransactionsDataAggregation(body: any): any {
         const one_day_in_sec = 60 * 60 * 24;
         return [
@@ -191,7 +199,7 @@ export class TransactionsService {
                     },
                     total: { $sum: "$value" },
                     max: { "$max": { value: "$value", category_id: "$category_id" } },
-                    min: { "$min": "$value" },
+                    min: { "$min": { value: "$value", category_id: "$category_id" } },
                     avg: { "$avg": "$value" }
                 }
             },
@@ -218,6 +226,22 @@ export class TransactionsService {
                 }
             },
             { $unwind: "$day" },
+            {
+                $set: {
+                    "max.percentage": {
+                        "$multiply": [
+                            { "$divide": ["$max.value", "$total"] },
+                            100
+                        ]
+                    },
+                    "min.percentage": {
+                        "$multiply": [
+                            { "$divide": ["$min.value", "$total"] },
+                            100
+                        ]
+                    }
+                }
+            },
             {
                 $project: {
                     data: {
@@ -248,92 +272,12 @@ export class TransactionsService {
         ]
     }
 
-    /**
-     * The function `getYearTotal` retrieves the total debit value for a specific user within a given
-     * time range.
-     * @param {any} body - The `body` parameter is an object that contains the following properties:
-     * @returns an object with the following properties:
-     * - total: The total value of debit transactions for the specified user within the specified time
-     * range.
-     * - message: A message indicating that all month overall transactions have been fetched.
-     * - status: The HTTP status code indicating the success of the operation (HttpStatus.OK).
-     */
-    async getYearTotal(body: any) {
-        try {
-            let debit_data = await this.userDebitsModel.aggregate([
-                {
-                    $match: {
-                        "user_id": body.user_id,
-                        "created_at": { $gt: moment.utc(body.start_time).toDate(), $lte: moment.utc(body.end_time).toDate() }
-                    },
-                },
-                {
-                    $set: {
-                        total: 0
-                    }
-                },
-                {
-                    $group: {
-                        _id: null,
-                        total: { $sum: "$value" },
-                    }
-                },
-            ])
-            return {
-                total: debit_data[0]?.total ? debit_data[0].total : 0,
-                message: "Fetched All Month Overall Transactions",
-            }
-        } catch (error) {
-            throw new HttpException(error.message ?? "Failed to fetch data", error.status ?? 500)
-        }
-    }
-
-    /**
-     * The function `getMonthCategoryWiseDebits` fetches all month overall category-wise debits from
-     * the userDebitsModel using aggregation.
-     * @param {any} body - The `body` parameter is an object that contains the necessary information
-     * for the aggregation query. It is used to specify the filters and conditions for the query.
-     * @returns an object with the following properties:
-     * - `data`: It contains the fetched data, where each category is a key and the corresponding value
-     * is an object containing the category-wise debits.
-     * - `message`: A string message indicating that all month overall category-wise debits have been
-     * fetched.
-     * - `status`: The HTTP status code, which is set to `HttpStatus.OK` (200
-     */
-    async getMonthCategoryWiseDebits(body: any) {
-        try {
-            let query_data = await this.userDebitsModel.aggregate(this.categoryWiseAggregation(body))
-            let data = {}
-            for (let item of query_data) {
-                data[item._id] = item
-            }
-            return {
-                data,
-                message: "Fetched All Month Overall Category Wise Debits",
-            }
-        } catch (error) {
-            throw new HttpException(error.message ?? "Failed to fetch data", error.status ?? 500)
-        }
-    }
-
-    /**
-     * The function `getMonthCategoryWiseOverallData` retrieves category-wise data for debits, credits,
-     * and estimations for a given month.
-     * @param {any} body - The `body` parameter is an object that contains the necessary information
-     * for fetching the month category-wise overall data. It may include properties such as the month,
-     * year, user ID, or any other relevant information required for the aggregation query.
-     * @returns an object with the following properties:
-     * - `data`: an object containing the fetched debit, credit, and estimation data categorized by
-     * month.
-     * - `message`: a string indicating the success message.
-     * - `status`: an HTTP status code indicating the success status.
-     */
-    async getMonthCategoryWiseOverallData(body: any) {
+    async getMonthCategoryWiseOverallData(user_id: string, body: any) {
         try {
             const [debit_data, credit_data, estimation_data] = await Promise.all([
-                this.userDebitsModel.aggregate(this.categoryWiseAggregation(body)),
-                this.userCreditsModel.aggregate(this.categoryWiseAggregation(body)),
-                this.userEstimationModel.aggregate(this.categoryWiseAggregation(body))
+                this.userDebitsModel.aggregate(this.categoryWiseAggregation({ ...body, user_id })),
+                this.userCreditsModel.aggregate(this.categoryWiseAggregation({ ...body, user_id })),
+                this.userEstimationModel.aggregate(this.categoryWiseAggregation({ ...body, user_id }))
             ])
             let data = {
                 debits: {},
@@ -391,33 +335,21 @@ export class TransactionsService {
         ]
     }
 
-    /**
-     * The function `getSingleCategoryMonthData` retrieves data for a specific category in a given
-     * month, including total, minimum, maximum, and average values.
-     * @param {any} body - The `body` parameter is an object that contains the request body data. It is
-     * used to determine the type of data to fetch (spends, estimations, or income) and to provide
-     * additional filters or criteria for the data aggregation.
-     * @returns an object with the following properties:
-     * - data: an array of aggregated transaction data
-     * - total: the total value of the transactions (defaulting to 0 if not present)
-     * - min: the minimum value of the transactions (defaulting to 0 if not present)
-     * - max: the maximum value of the transactions (defaulting to 0 if not present)
-     * - avg
-     */
-    async getSingleCategoryMonthData(body: any) {
+    async getSingleCategoryMonthData(user_id: string, body: any) {
         try {
-            let type = "spends";
+            let type = "debit";
             if (body.type) {
                 type = body.type
             }
             let data = [];
-            if (type === "spends") {
-                data = await this.userDebitsModel.aggregate(this.createOverallTransactionsDataAggregation(body))
-            } else if (type === "estimations") {
-                data = await this.userEstimationModel.aggregate(this.createOverallTransactionsDataAggregation(body))
-            } else if (type === "income") {
-                data = await this.userCreditsModel.aggregate(this.createOverallTransactionsDataAggregation(body))
+            if (type === "debit") {
+                data = await this.userDebitsModel.aggregate(this.createOverallTransactionsDataAggregation({ ...body, user_id }))
+            } else if (type === "estimation") {
+                data = await this.userEstimationModel.aggregate(this.createOverallTransactionsDataAggregation({ ...body, user_id }))
+            } else if (type === "credit") {
+                data = await this.userCreditsModel.aggregate(this.createOverallTransactionsDataAggregation({ ...body, user_id }))
             }
+            console.log('data', data)
             return {
                 data,
                 total: data[0]?.total ?? 0,

@@ -1,55 +1,57 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Headers, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, LoginDto } from './dto/create-user.dto';
+import { AuthService } from './auth.service';
+import { PasswordService } from './password.service';
+import { AuthGuard } from './guards/auth.guard';
 
 @Controller('user')
 export class UserController {
   constructor(
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly authService: AuthService,
+    private readonly passwordService: PasswordService,
   ) { }
 
   @Post("signup")
-  signUpUser(@Body() body: CreateUserDto) {
-    return this.userService.signUpUser(body)
+  createUser(@Body() body: CreateUserDto) {
+    return this.userService.createUser(body)
   }
 
   @Post("login")
   login(@Body() body: LoginDto) {
-    return this.userService.login(body)
+    return this.authService.login(body)
   }
 
   @Post("verify")
   verifyUser(@Body() body) {
-    return this.userService.verifyUser(body)
+    return this.passwordService.verifyUser(body)
   }
 
   @Post("reset-password")
-  sendPasswordLink(@Body() body) {
-    return this.userService.sendForgetPasswordLink(body)
+  sendForgetPassword(@Body() body) {
+    return this.passwordService.sendForgetPassword(body)
   }
 
-  @Get()
-  getAllUsers() {
-    return this.userService.getAllUsers()
-  }
-
-  @Patch("password/:user_id")
-  updateUserPassword(@Param() object, @Body() body) {
-    return this.userService.updateUserPassword(object.user_id, body)
+  @Patch("password")
+  @UseGuards(AuthGuard)
+  changePassword(@Headers() headers, @Body() body) {
+    return this.passwordService.changePassword(headers, body)
   }
 
   @Patch("override-password")
-  resetUserPassword(@Body() body) {
-    return this.userService.resetUserPassword(body)
+  setUserPassword(@Body() body) {
+    return this.passwordService.setUserPassword(body)
   }
 
-  @Patch("/:user_id")
-  updateUserDetails(@Param() object, @Body() body) {
-    return this.userService.updateUserDetails(object.user_id, body)
+  @Patch()
+  @UseGuards(AuthGuard)
+  updateUser(@Headers() headers, @Body() body) {
+    return this.userService.updateUser(headers, body)
   }
 
   @Delete("/:user_id")
-  removeUser(@Param() object) {
+  deleteUser(@Param() object) {
     return this.userService.deleteUser(object.user_id)
   }
 
