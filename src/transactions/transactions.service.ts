@@ -173,6 +173,19 @@ export class TransactionsService {
         }
     }
 
+    /**
+     * The function `createOverallTransactionsDataAggregation` aggregates transaction data based on
+     * user ID, category ID, and time range, calculating total, max, min, and average values along with
+     * percentages.
+     * @param {any} body - The `createOverallTransactionsDataAggregation` function is used to aggregate
+     * transaction data based on the provided parameters in the `body` object. Here's a breakdown of
+     * the aggregation pipeline stages used in the function:
+     * @returns The function `createOverallTransactionsDataAggregation` is returning an array of
+     * MongoDB aggregation pipeline stages. These stages are used to aggregate data from a collection
+     * based on the provided criteria in the `body` object. The stages include matching documents based
+     * on user_id, category_id, and created_at time range, sorting the documents, setting initial total
+     * value, grouping data to calculate total, max, min,
+     */
     private createOverallTransactionsDataAggregation(body: any): any {
         const one_day_in_sec = 60 * 60 * 24;
         return [
