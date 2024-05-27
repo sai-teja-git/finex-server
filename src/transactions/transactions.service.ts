@@ -399,7 +399,6 @@ export class TransactionsService {
             } else if (type === "credit") {
                 data = await this.userCreditsModel.aggregate(this.createOverallTransactionsDataAggregation({ ...body, user_id }))
             }
-            console.log('data', data)
             return {
                 data,
                 total: data[0]?.total ?? 0,
