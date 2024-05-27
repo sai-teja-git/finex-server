@@ -285,6 +285,25 @@ export class TransactionsService {
         ]
     }
 
+    /**
+     * This TypeScript function retrieves month category-wise overall data for a user by aggregating
+     * debit, credit, and estimation data.
+     * @param {string} user_id - The `getMonthCategoryWiseOverallData` function is designed to fetch
+     * overall data categorized by month for a specific user. It retrieves debit, credit, and
+     * estimation data for each category based on the provided `user_id` and request body.
+     * @param {any} body - The `getMonthCategoryWiseOverallData` function is an asynchronous function
+     * that fetches debit, credit, and estimation data for a specific user based on the provided
+     * `user_id` and `body` parameters. The `body` parameter is an object containing additional data
+     * needed for the aggregation query.
+     * @returns {
+     *     data: {
+     *         debits: { },
+     *         credits: { },
+     *         estimations: { }
+     *     },
+     *     message: "Fetched All Month Overall Category Wise Debits"
+     * }
+     */
     async getMonthCategoryWiseOverallData(user_id: string, body: any) {
         try {
             const [debit_data, credit_data, estimation_data] = await Promise.all([
@@ -348,6 +367,24 @@ export class TransactionsService {
         ]
     }
 
+    /**
+     * This TypeScript function retrieves monthly category data based on the type (debit, estimation,
+     * credit) for a specific user.
+     * @param {string} user_id - The `user_id` parameter in the `getSingleCategoryMonthData` function
+     * is a string that represents the unique identifier of the user for whom you want to fetch data.
+     * This identifier is used to filter and retrieve specific data related to that user from the
+     * database.
+     * @param {any} body - The `getSingleCategoryMonthData` function is an asynchronous function that
+     * retrieves data for a specific category and month based on the provided `user_id` and `body`
+     * parameters. The `body` parameter is an object containing information about the type of data to
+     * retrieve.
+     * @returns The function `getSingleCategoryMonthData` is returning an object with the following
+     * properties:
+     * - `data`: an array of transaction data
+     * - `total`: the total value from the transaction data (defaulted to 0 if not present)
+     * - `min`: the minimum value from the transaction data (defaulted to 0 if not present)
+     * - `max`: the maximum value from the transaction
+     */
     async getSingleCategoryMonthData(user_id: string, body: any) {
         try {
             let type = "debit";

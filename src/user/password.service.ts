@@ -121,6 +121,20 @@ export class PasswordService {
         }
     }
 
+    /**
+     * The function `changePassword` in TypeScript updates a user's password after verifying the old
+     * password and ensuring the new password is not the same as the old one.
+     * @param headers - The `headers` parameter typically contains information about the request being
+     * made, such as the user making the request, authentication tokens, or other metadata. In your
+     * `changePassword` function, the `headers` parameter seems to be used to identify the user whose
+     * password is being changed, as you are using
+     * @param data - The `data` parameter in the `changePassword` function likely contains information
+     * related to changing a user's password. It may include the following key-value pairs:
+     * @returns {
+     *     message: "User Details Updated",
+     *     status: HttpStatus.OK
+     * }
+     */
     async changePassword(headers, data) {
         const saltRounds = 10
         try {
@@ -228,17 +242,17 @@ export class PasswordService {
 
 
     /**
-       * The function `sendMail` sends a templated email using the `mailService` and returns a response
-       * object with the envelope and message ID.
-       * @param body - The `body` parameter is the data that contains the necessary information for sending
-       * the email. It could include details such as the recipient's email address, the subject of the
-       * email, the content of the email, and any other relevant information needed for sending the email.
-       * @returns an object with the following properties:
-       * - message: "Mail Sent"
-       * - status: HttpStatus.CREATED
-       * - data: an object with the properties envelope and messageId, which are obtained from the
-       * mail_data object returned by the mailService.sendTemplatedEmail() function.
-       */
+     * The function `sendMail` sends a templated email using the `mailService` and returns a response
+     * object with the envelope and message ID.
+     * @param body - The `body` parameter is the data that contains the necessary information for sending
+     * the email. It could include details such as the recipient's email address, the subject of the
+     * email, the content of the email, and any other relevant information needed for sending the email.
+     * @returns an object with the following properties:
+     * - message: "Mail Sent"
+     * - status: HttpStatus.CREATED
+     * - data: an object with the properties envelope and messageId, which are obtained from the
+     * mail_data object returned by the mailService.sendTemplatedEmail() function.
+     */
     private async sendInvitation(body: Record<string, any>) {
         try {
             let mail_data = await this.notificationService.sendTemplatedEmail(body)
