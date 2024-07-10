@@ -335,10 +335,14 @@ export class TransactionsService {
     }
 
     /**
-     * The function performs category-wise aggregation on a given dataset based on user ID, start time,
-     * and end time.
-     * @param {any} body - The `body` parameter is an object that contains the following properties:
-     * @returns an array of aggregation stages for MongoDB.
+     * The function performs aggregation based on categories for a given user within a specified time
+     * range.
+     * @param {any} body - The `categoryWiseAggregation` function takes a `body` object as a parameter.
+     * The `body` object should contain the following properties:
+     * @returns An aggregation pipeline array is being returned. The pipeline includes stages for
+     * matching documents based on user_id and created_at time range, setting an initial total value,
+     * and grouping documents by category_id while calculating count, total, max, min, and average
+     * values for the "value" field within each category.
      */
     categoryWiseAggregation(body: any) {
         return [
