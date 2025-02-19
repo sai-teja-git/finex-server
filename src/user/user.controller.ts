@@ -1,4 +1,4 @@
-import { Controller, Headers, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Headers, Post, Body, Patch, Param, Delete, UseGuards, Get } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, LoginDto } from './dto/create-user.dto';
 import { AuthService } from './auth.service';
@@ -50,9 +50,15 @@ export class UserController {
     return this.userService.updateUser(headers, body)
   }
 
-  @Delete("/:user_id")
+  @Delete("delete-request/:user_id")
+  @UseGuards(AuthGuard)
+  deleteRequest(@Param() object) {
+    return this.userService.userDeleteRequest(object.user_id, "user")
+  }
+
+  @Get("delete/:user_id")
   deleteUser(@Param() object) {
-    return this.userService.deleteUser(object.user_id)
+    return this.userService.userDeleteRequest(object.user_id, "admin")
   }
 
 }

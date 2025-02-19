@@ -1,0 +1,27 @@
+<mjml>
+  <mj-head>
+    <mj-attributes>
+      <mj-class name="blue" background-color="#f1f5f9" />
+      <mj-class name="fontFamily" font-family="Roboto,sans-serif" />
+      <mj-class name="background" background='#e0edf2' />
+      <mj-button background-color="#581c87" color="#ffffff" font-family="Roboto,sans-serif" font-size="12px" font-weight="500" align="center" />
+      <mj-image padding="0px,0px,0px" align="left" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#f1f5f9">
+    <mj-wrapper padding="20px">
+      <mj-section padding="20px 20px 0px 20px" background-color="#083344" border-radius="10px">
+        <mj-column padding-bottom="30px">
+          <mj-image mj-class="logo" src="https://finexs.vercel.app/assets/finex-logo-light-jJwOKACC.png" alt="Company Logo" width="100px" padding-bottom="15px" />
+          <mj-text mj-class="fontFamily" font-size="20px" font-weight="800" padding="5px" color="#fff">Confirm your Delete request</mj-text>
+          <mj-text mj-class="fontFamily" font-size="14px" color="#b3b3b3" padding="5px">Hi {{name}}! You have requested to delete your account. Please confirm your request by clicking the <span style="font-size: 18px; font-weight: bold;">Confirm</span> button below.</mj-text>
+          <mj-button mj-class="fontFamily" href="{{ verify_link }}" background-color="#f16f25" align="center" padding="15px">Confirm</mj-button>
+          <mj-text mj-class="fontFamily" font-size="14px" color="#b3b3b3" padding="5px">If you are having trouble clicking the "Confirm" button click on below URL or copy paste in browser. </mj-text>
+          <mj-text mj-class="fontFamily" font-size="14px" color="#b3b3b3" padding="5px"> {{verify_link}}</mj-text>
+          <mj-text mj-class="fontFamily" font-size="14px" color="#efd260" padding="5px">link is valid for 5 Min.</mj-text>
+          <mj-text mj-class="fontFamily" font-size="14px" color="#b3b3b3" padding="5px">If you did not initiate this request, someone else may have attempted to delete your account. Please update your password immediately to secure your account.</mj-text>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+  </mj-body>
+</mjml>

@@ -226,4 +226,53 @@ export class UserService {
       throw new HttpException(error.message, error.status ?? 500)
     }
   }
+
+  async userDeleteRequest(user_id: string, type: "user" | "admin" = "user") {
+    try {
+      const user_data = await this.userModel.findOne({ _id: user_id }).exec();
+      console.log("user_data", user_data)
+      const params = new URLSearchParams({
+        code: "token",
+      }).toString()
+      const verification_link = `${env.UI_DOMAIN}/user-deletion-confirmation?${params}`;
+      try {
+        let mail_body = {
+          to: (() => {
+            try {
+              if (type === "admin") {
+                return [process.env.EMAIL_USER]
+              }
+              return [user_data.email]
+            } catch { }
+            return []
+          })(),
+          title: "Delete Request",
+          subject: "Confirm Your Request",
+          template: "user_delete",
+          "context": {
+            "name": user_data.name,
+            "verify_link": encodeURI(verification_link),
+            "attachments": []
+          }
+        }
+        console.log("mail_body", mail_body)
+
+        //   await this.sendInvitation(mail_body)
+      } catch (error) {
+        await this.userModel.deleteOne({ _id: user_data._id });
+        throw new HttpException(error.message, error.status ?? 500)
+      }
+      return {
+        message: "Mail Sent",
+        status: HttpStatus.OK,
+        data: {
+          // envelope: mail_data.envelope,
+          // messageId: mail_data.messageId
+        }
+      }
+    } catch (error) {
+      throw new HttpException(error.message, error.status ?? 500)
+    }
+  }
+
 }
