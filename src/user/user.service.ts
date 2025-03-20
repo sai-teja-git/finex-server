@@ -13,6 +13,9 @@ import { USER_CATEGORY_TABLE, UserCategoryModel } from 'src/user-category/schema
 import { URLSearchParams } from 'url';
 import { USER_TABLE, UserModel } from './schemas/user.schema';
 import { NotificationService } from 'src/common/services/notification.service';
+import { MAIL_TYPES } from 'src/constants/mail-data.const';
+import * as moment from "moment-timezone"
+import { USER_MAIL_DATA_TABLE, UserMailDataModel } from './schemas/user-mail-data.schema';
 
 @Injectable()
 export class UserService {
@@ -41,6 +44,9 @@ export class UserService {
 
     @InjectModel(CURRENCY_TABLE)
     private currencyModel: Model<CurrencyModel>,
+
+    @InjectModel(USER_MAIL_DATA_TABLE)
+    private userMailDataModel: Model<UserMailDataModel>,
 
     private readonly jwtService: JwtService,
     private readonly notificationService: NotificationService,
@@ -231,10 +237,16 @@ export class UserService {
     try {
       const user_data = await this.userModel.findOne({ _id: user_id }).exec();
       console.log("user_data", user_data)
+      const req_data = await this.userMailDataModel.create({
+        type: MAIL_TYPES.DELETE_USER,
+        data: user_data,
+        expires_at: moment.utc().add(5, 'minutes')
+      })
+      console.log("req_data", req_data, "\n", req_data.get("_id"))
       const params = new URLSearchParams({
-        code: "token",
+        code: String(req_data["_id"]),
       }).toString()
-      const verification_link = `${env.UI_DOMAIN}/user-deletion-confirmation?${params}`;
+      const verification_link = `${env.UI_DOMAIN}/user-delete-confirmation?${params}`;
       try {
         let mail_body = {
           to: (() => {
@@ -257,7 +269,7 @@ export class UserService {
         }
         console.log("mail_body", mail_body)
 
-        //   await this.sendInvitation(mail_body)
+        //   const mail_data = await this.sendInvitation(mail_body)
       } catch (error) {
         await this.userModel.deleteOne({ _id: user_data._id });
         throw new HttpException(error.message, error.status ?? 500)
@@ -269,6 +281,22 @@ export class UserService {
           // envelope: mail_data.envelope,
           // messageId: mail_data.messageId
         }
+      }
+    } catch (error) {
+      throw new HttpException(error.message, error.status ?? 500)
+    }
+  }
+
+  async getDeletingUserName(code: string) {
+    try {
+      let data = await this.userMailDataModel.findById(code);
+      if (!data) {
+        throw new Error("Link Expired/Invalid Link")
+      }
+      return {
+        data: { name: data.data["name"] },
+        status: HttpStatus.OK,
+        message: "Feted User Name"
       }
     } catch (error) {
       throw new HttpException(error.message, error.status ?? 500)

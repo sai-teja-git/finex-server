@@ -56,6 +56,11 @@ export class UserController {
     return this.userService.userDeleteRequest(object.user_id, "user")
   }
 
+  @Get("deleting/:code")
+  getDeletingUserName(@Param() object) {
+    return this.userService.getDeletingUserName(object.code)
+  }
+
   @Get("delete/:user_id")
   deleteUser(@Param() object) {
     return this.userService.userDeleteRequest(object.user_id, "admin")
