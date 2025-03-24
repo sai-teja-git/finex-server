@@ -303,4 +303,21 @@ export class UserService {
     }
   }
 
+  async userDeleteConfirmed(code: string) {
+    try {
+      let data = await this.userMailDataModel.findById(code);
+      if (!data) {
+        throw new Error("Link Expired/Invalid Link")
+      }
+      const response = await this.deleteUser(data.data["_id"])
+      return {
+        data: response,
+        status: HttpStatus.OK,
+        message: "User Deleted"
+      }
+    } catch (error) {
+      throw new HttpException(error.message, error.status ?? 500)
+    }
+  }
+
 }

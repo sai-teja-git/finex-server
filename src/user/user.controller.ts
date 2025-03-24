@@ -66,4 +66,9 @@ export class UserController {
     return this.userService.userDeleteRequest(object.user_id, "admin")
   }
 
+  @Delete("/:code")
+  userDeleteConfirmed(@Param() object) {
+    return this.userService.userDeleteConfirmed(object.code)
+  }
+
 }
