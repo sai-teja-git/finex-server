@@ -11,11 +11,15 @@ import { PasswordService } from './password.service';
 import { USER_TABLE, UserSchema } from './schemas/user.schema';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { USER_MAIL_DATA_TABLE, UserMailDataSchema } from './schemas/user-mail-data.schema';
 
 @Global()
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: USER_TABLE, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: USER_TABLE, schema: UserSchema },
+      { name: USER_MAIL_DATA_TABLE, schema: UserMailDataSchema }
+    ]),
     forwardRef(() => CategoryModule),
     forwardRef(() => UserCategoryModule),
     forwardRef(() => TransactionsModule),

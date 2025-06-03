@@ -13,6 +13,9 @@ import { USER_CATEGORY_TABLE, UserCategoryModel } from 'src/user-category/schema
 import { URLSearchParams } from 'url';
 import { USER_TABLE, UserModel } from './schemas/user.schema';
 import { NotificationService } from 'src/common/services/notification.service';
+import { MAIL_TYPES } from 'src/constants/mail-data.const';
+import * as moment from "moment-timezone"
+import { USER_MAIL_DATA_TABLE, UserMailDataModel } from './schemas/user-mail-data.schema';
 
 @Injectable()
 export class UserService {
@@ -41,6 +44,9 @@ export class UserService {
 
     @InjectModel(CURRENCY_TABLE)
     private currencyModel: Model<CurrencyModel>,
+
+    @InjectModel(USER_MAIL_DATA_TABLE)
+    private userMailDataModel: Model<UserMailDataModel>,
 
     private readonly jwtService: JwtService,
     private readonly notificationService: NotificationService,
@@ -226,4 +232,90 @@ export class UserService {
       throw new HttpException(error.message, error.status ?? 500)
     }
   }
+
+  async userDeleteRequest(user_id: string, type: "user" | "admin" = "user") {
+    try {
+      const user_data = await this.userModel.findOne({ _id: user_id }).exec();
+      const req_data = await this.userMailDataModel.create({
+        type: MAIL_TYPES.DELETE_USER,
+        data: user_data,
+        expires_at: moment.utc().add(5, 'minutes')
+      })
+      const params = new URLSearchParams({
+        code: String(req_data["_id"]),
+      }).toString()
+      const verification_link = `${env.UI_DOMAIN}/user-delete-confirmation?${params}`;
+      let mail_data: any = {};
+      try {
+        let mail_body = {
+          to: (() => {
+            try {
+              if (type === "admin") {
+                return [process.env.EMAIL_USER]
+              }
+              return [user_data.email]
+            } catch { }
+            return []
+          })(),
+          title: "Delete Request",
+          subject: "Confirm Your Request",
+          template: "user_delete",
+          "context": {
+            "name": user_data.name,
+            "verify_link": encodeURI(verification_link),
+            "attachments": []
+          }
+        }
+
+        mail_data = await this.sendInvitation(mail_body)
+      } catch (error) {
+        await this.userModel.deleteOne({ _id: user_data._id });
+        throw new HttpException(error.message, error.status ?? 500)
+      }
+      return {
+        message: "Mail Sent",
+        status: HttpStatus.OK,
+        data: {
+          envelope: mail_data.envelope ?? null,
+          messageId: mail_data.messageId ?? null
+        }
+      }
+    } catch (error) {
+      throw new HttpException(error.message, error.status ?? 500)
+    }
+  }
+
+  async getDeletingUserName(code: string) {
+    try {
+      let data = await this.userMailDataModel.findById(code);
+      if (!data) {
+        throw new Error("Link Expired/Invalid Link")
+      }
+      return {
+        data: { name: data.data["name"] },
+        status: HttpStatus.OK,
+        message: "Feted User Name"
+      }
+    } catch (error) {
+      throw new HttpException(error.message, error.status ?? 500)
+    }
+  }
+
+  async userDeleteConfirmed(code: string) {
+    try {
+      let data = await this.userMailDataModel.findById(code);
+      if (!data) {
+        throw new Error("Link Expired/Invalid Link")
+      }
+      const response = await this.deleteUser(data.data["_id"])
+      return {
+        data: response,
+        status: HttpStatus.OK,
+        message: "User Deleted"
+      }
+    } catch (error) {
+      throw new HttpException(error.message, error.status ?? 500)
+    }
+  }
+
 }
