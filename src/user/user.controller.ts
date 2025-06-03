@@ -50,10 +50,10 @@ export class UserController {
     return this.userService.updateUser(headers, body)
   }
 
-  @Delete("delete-request/:user_id")
+  @Delete("delete-request")
   @UseGuards(AuthGuard)
-  deleteRequest(@Param() object) {
-    return this.userService.userDeleteRequest(object.user_id, "user")
+  deleteRequest(@Headers() headers) {
+    return this.userService.userDeleteRequest(headers.user, "user")
   }
 
   @Get("deleting/:code")

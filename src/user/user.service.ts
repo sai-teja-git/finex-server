@@ -236,17 +236,16 @@ export class UserService {
   async userDeleteRequest(user_id: string, type: "user" | "admin" = "user") {
     try {
       const user_data = await this.userModel.findOne({ _id: user_id }).exec();
-      console.log("user_data", user_data)
       const req_data = await this.userMailDataModel.create({
         type: MAIL_TYPES.DELETE_USER,
         data: user_data,
         expires_at: moment.utc().add(5, 'minutes')
       })
-      console.log("req_data", req_data, "\n", req_data.get("_id"))
       const params = new URLSearchParams({
         code: String(req_data["_id"]),
       }).toString()
       const verification_link = `${env.UI_DOMAIN}/user-delete-confirmation?${params}`;
+      let mail_data: any = {};
       try {
         let mail_body = {
           to: (() => {
@@ -267,9 +266,8 @@ export class UserService {
             "attachments": []
           }
         }
-        console.log("mail_body", mail_body)
 
-        //   const mail_data = await this.sendInvitation(mail_body)
+        mail_data = await this.sendInvitation(mail_body)
       } catch (error) {
         await this.userModel.deleteOne({ _id: user_data._id });
         throw new HttpException(error.message, error.status ?? 500)
@@ -278,8 +276,8 @@ export class UserService {
         message: "Mail Sent",
         status: HttpStatus.OK,
         data: {
-          // envelope: mail_data.envelope,
-          // messageId: mail_data.messageId
+          envelope: mail_data.envelope ?? null,
+          messageId: mail_data.messageId ?? null
         }
       }
     } catch (error) {
