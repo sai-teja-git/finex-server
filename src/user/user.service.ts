@@ -236,6 +236,7 @@ export class UserService {
   async userDeleteRequest(user_id: string, type: "user" | "admin" = "user") {
     try {
       const user_data = await this.userModel.findOne({ _id: user_id }).exec();
+      if (!user_data) throw new HttpException("User Not found", 500)
       const req_data = await this.userMailDataModel.create({
         type: MAIL_TYPES.DELETE_USER,
         data: user_data,
@@ -269,7 +270,7 @@ export class UserService {
 
         mail_data = await this.sendInvitation(mail_body)
       } catch (error) {
-        await this.userModel.deleteOne({ _id: user_data._id });
+        await this.userMailDataModel.deleteOne({ _id: req_data["_id"] });
         throw new HttpException(error.message, error.status ?? 500)
       }
       return {
